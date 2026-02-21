@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Veritabanı (geliştirme)
+*.db
+
+# Ortam değişkenleri
+.env
+
+# PDF ve QR geçici dosyaları
+*.pdf
+qr.png

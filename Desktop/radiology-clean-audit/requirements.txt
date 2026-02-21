@@ -4,5 +4,8 @@ pydantic
 reportlab
 qrcode
 python-multipart
-
 sqlalchemy
+
+# Test
+pytest
+httpx
