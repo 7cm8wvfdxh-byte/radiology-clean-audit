@@ -10,6 +10,29 @@ import { getToken, clearToken } from "@/lib/auth";
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 // ── Tipler ────────────────────────────────────────────────────────────────────
+
+type Lesion = {
+  location: string;
+  size_mm: string;
+  t1_signal: string;
+  t2_signal: string;
+  dwi_restriction: boolean;
+  arterial_enhancement: string;
+  washout: boolean;
+  capsule: boolean;
+  additional: string;
+};
+
+type BrainLesion = {
+  location: string;
+  size_mm: string;
+  t1_signal: string;
+  t2_flair_signal: string;
+  dwi_restriction: boolean;
+  enhancement: string;
+  additional: string;
+};
+
 type ClinicalForm = {
   region: "abdomen" | "brain" | "both";
   age: string;
@@ -19,6 +42,39 @@ type ClinicalForm = {
   contrast_agent: string;
   risk_factors: string;
   notes: string;
+  // MRI sequences available
+  sequences: string[];
+  // Abdomen findings
+  liver_parenchyma: string;
+  lesions: Lesion[];
+  other_organs: string;
+  vascular: string;
+  // Brain findings
+  brain_general: string;
+  brain_lesions: BrainLesion[];
+  brain_other: string;
+};
+
+const emptyLesion: Lesion = {
+  location: "",
+  size_mm: "",
+  t1_signal: "",
+  t2_signal: "",
+  dwi_restriction: false,
+  arterial_enhancement: "",
+  washout: false,
+  capsule: false,
+  additional: "",
+};
+
+const emptyBrainLesion: BrainLesion = {
+  location: "",
+  size_mm: "",
+  t1_signal: "",
+  t2_flair_signal: "",
+  dwi_restriction: false,
+  enhancement: "",
+  additional: "",
 };
 
 const defaultForm: ClinicalForm = {
@@ -30,7 +86,50 @@ const defaultForm: ClinicalForm = {
   contrast_agent: "",
   risk_factors: "",
   notes: "",
+  sequences: [],
+  liver_parenchyma: "",
+  lesions: [{ ...emptyLesion }],
+  other_organs: "",
+  vascular: "",
+  brain_general: "",
+  brain_lesions: [{ ...emptyBrainLesion }],
+  brain_other: "",
 };
+
+const ABDOMEN_SEQUENCES = [
+  "T2 HASTE/TSE",
+  "T2 Yag Baskilamali",
+  "DWI / ADC",
+  "T1 In/Out-of-Phase",
+  "T1 Pre-kontrast",
+  "Arteriyel Faz",
+  "Portal Venoz Faz",
+  "Gec / Ekuilibrium Faz",
+  "Hepatobiliyer Faz (Primovist)",
+];
+
+const BRAIN_SEQUENCES = [
+  "T1 SE/TSE",
+  "T2 TSE",
+  "FLAIR",
+  "DWI / ADC",
+  "SWI / GRE",
+  "T1 Post-kontrast",
+  "MRA (TOF/Kontrast)",
+  "MRS",
+  "Perfuzyon",
+];
+
+const LIVER_SEGMENTS = [
+  "Segment I (kaudat)",
+  "Segment II",
+  "Segment III",
+  "Segment IV",
+  "Segment V",
+  "Segment VI",
+  "Segment VII",
+  "Segment VIII",
+];
 
 // ── DICOM Yükleme Alanı ───────────────────────────────────────────────────────
 function DicomDropzone({
@@ -65,17 +164,17 @@ function DicomDropzone({
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
           dragging
             ? "border-zinc-500 bg-zinc-100"
             : "border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50"
         }`}
       >
         <div className="text-sm text-zinc-500">
-          DICOM dosyalarını buraya sürükleyin veya tıklayın
+          DICOM dosyalarini buraya surukleyin veya tiklayin
         </div>
         <div className="text-xs text-zinc-400 mt-1">
-          (.dcm, .dicom — birden fazla seçilebilir)
+          (.dcm, .dicom — birden fazla secilebilir)
         </div>
         <input
           ref={inputRef}
@@ -100,7 +199,7 @@ function DicomDropzone({
                 onClick={() => onFiles(files.filter((_, j) => j !== i))}
                 className="text-zinc-400 hover:text-red-500 ml-2 font-bold"
               >
-                ×
+                x
               </button>
             </li>
           ))}
@@ -110,7 +209,351 @@ function DicomDropzone({
   );
 }
 
-// ── Streaming Rapor Görüntüleyici ─────────────────────────────────────────────
+// ── Sekans secici ─────────────────────────────────────────────────────────────
+function SequenceSelector({
+  options,
+  selected,
+  onChange,
+}: {
+  options: string[];
+  selected: string[];
+  onChange: (s: string[]) => void;
+}) {
+  function toggle(seq: string) {
+    if (selected.includes(seq)) {
+      onChange(selected.filter((s) => s !== seq));
+    } else {
+      onChange([...selected, seq]);
+    }
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((seq) => (
+        <label
+          key={seq}
+          className={`flex items-center gap-1.5 cursor-pointer text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
+            selected.includes(seq)
+              ? "bg-zinc-800 text-white border-zinc-800"
+              : "bg-white text-zinc-600 border-zinc-300 hover:border-zinc-400"
+          }`}
+        >
+          <input
+            type="checkbox"
+            checked={selected.includes(seq)}
+            onChange={() => toggle(seq)}
+            className="hidden"
+          />
+          {seq}
+        </label>
+      ))}
+    </div>
+  );
+}
+
+// ── Abdomen Lezyon Formu ──────────────────────────────────────────────────────
+function AbdomenLesionForm({
+  lesion,
+  index,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  lesion: Lesion;
+  index: number;
+  onChange: (l: Lesion) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  function set<K extends keyof Lesion>(key: K, val: Lesion[K]) {
+    onChange({ ...lesion, [key]: val });
+  }
+
+  return (
+    <div className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-zinc-50/50">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-zinc-700">
+          Lezyon {index + 1}
+        </span>
+        {canRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs text-zinc-400 hover:text-red-500"
+          >
+            Kaldir
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Lokalizasyon</label>
+          <select
+            value={lesion.location}
+            onChange={(e) => set("location", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Secin...</option>
+            {LIVER_SEGMENTS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+            <option value="Sag lob (diffuz)">Sag lob (diffuz)</option>
+            <option value="Sol lob (diffuz)">Sol lob (diffuz)</option>
+            <option value="Diger">Diger (notta belirtin)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Boyut (mm)</label>
+          <input
+            type="number"
+            min={0}
+            max={300}
+            value={lesion.size_mm}
+            onChange={(e) => set("size_mm", e.target.value)}
+            placeholder="orn: 22"
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T1 Sinyal</label>
+          <select
+            value={lesion.t1_signal}
+            onChange={(e) => set("t1_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T2 Sinyal</label>
+          <select
+            value={lesion.t2_signal}
+            onChange={(e) => set("t2_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hafif hiperintens">Hafif hiperintens</option>
+            <option value="belirgin hiperintens">Belirgin hiperintens (sivi benzeri)</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Arteriyel Faz</label>
+          <select
+            value={lesion.arterial_enhancement}
+            onChange={(e) => set("arterial_enhancement", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Belirtilmemis</option>
+            <option value="hiperenhansman (non-rim APHE)">Hiperenhansman (non-rim APHE)</option>
+            <option value="rim enhansman">Rim enhansman</option>
+            <option value="hipoenhansman">Hipoenhansman</option>
+            <option value="izoenhansman">Izoenhansman</option>
+          </select>
+        </div>
+        <div className="flex flex-col justify-end gap-1.5">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.dwi_restriction}
+              onChange={(e) => set("dwi_restriction", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700"
+            />
+            <span className="text-xs text-zinc-600">DWI Kisitlanmasi</span>
+          </label>
+        </div>
+      </div>
+
+      <div className="flex gap-4">
+        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+          <input
+            type="checkbox"
+            checked={lesion.washout}
+            onChange={(e) => set("washout", e.target.checked)}
+            className="h-3.5 w-3.5 accent-zinc-700"
+          />
+          <span className="text-xs text-zinc-600">Washout (portal/gec fazda)</span>
+        </label>
+        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+          <input
+            type="checkbox"
+            checked={lesion.capsule}
+            onChange={(e) => set("capsule", e.target.checked)}
+            className="h-3.5 w-3.5 accent-zinc-700"
+          />
+          <span className="text-xs text-zinc-600">Kapsul gorunumu</span>
+        </label>
+      </div>
+
+      <div>
+        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular</label>
+        <input
+          type="text"
+          value={lesion.additional}
+          onChange={(e) => set("additional", e.target.value)}
+          placeholder="orn: Mozaik patern, nodul-icinde-nodul, yag icerigi..."
+          className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Beyin Lezyon Formu ────────────────────────────────────────────────────────
+function BrainLesionForm({
+  lesion,
+  index,
+  onChange,
+  onRemove,
+  canRemove,
+}: {
+  lesion: BrainLesion;
+  index: number;
+  onChange: (l: BrainLesion) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  function set<K extends keyof BrainLesion>(key: K, val: BrainLesion[K]) {
+    onChange({ ...lesion, [key]: val });
+  }
+
+  return (
+    <div className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-zinc-50/50">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-zinc-700">
+          Lezyon {index + 1}
+        </span>
+        {canRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="text-xs text-zinc-400 hover:text-red-500"
+          >
+            Kaldir
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Lokalizasyon</label>
+          <select
+            value={lesion.location}
+            onChange={(e) => set("location", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Secin...</option>
+            <option value="Frontal lob">Frontal lob</option>
+            <option value="Temporal lob">Temporal lob</option>
+            <option value="Parietal lob">Parietal lob</option>
+            <option value="Oksipital lob">Oksipital lob</option>
+            <option value="Bazal ganglionlar">Bazal ganglionlar</option>
+            <option value="Talamus">Talamus</option>
+            <option value="Beyin sapi">Beyin sapi</option>
+            <option value="Serebellum">Serebellum</option>
+            <option value="Korpus kallozum">Korpus kallozum</option>
+            <option value="Intraventrikuler">Intraventrikuler</option>
+            <option value="Ekstra-aksiyel">Ekstra-aksiyel</option>
+            <option value="Diger">Diger (notta belirtin)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Boyut (mm)</label>
+          <input
+            type="number"
+            min={0}
+            max={200}
+            value={lesion.size_mm}
+            onChange={(e) => set("size_mm", e.target.value)}
+            placeholder="orn: 15"
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T1 Sinyal</label>
+          <select
+            value={lesion.t1_signal}
+            onChange={(e) => set("t1_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T2 / FLAIR Sinyal</label>
+          <select
+            value={lesion.t2_flair_signal}
+            onChange={(e) => set("t2_flair_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Kontrast Tutulumu</label>
+          <select
+            value={lesion.enhancement}
+            onChange={(e) => set("enhancement", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+          >
+            <option value="">Belirtilmemis</option>
+            <option value="homojen tutulum">Homojen tutulum</option>
+            <option value="heterojen tutulum">Heterojen tutulum</option>
+            <option value="rim tutulum">Rim (halka) tutulum</option>
+            <option value="tutulum yok">Tutulum yok</option>
+          </select>
+        </div>
+        <div className="flex flex-col justify-end gap-1.5">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.dwi_restriction}
+              onChange={(e) => set("dwi_restriction", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700"
+            />
+            <span className="text-xs text-zinc-600">DWI Kisitlanmasi</span>
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular</label>
+        <input
+          type="text"
+          value={lesion.additional}
+          onChange={(e) => set("additional", e.target.value)}
+          placeholder="orn: Perilesyonel odem, kitle etkisi, kanama, kalsifikasyon..."
+          className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Streaming Rapor Goruntuleici ─────────────────────────────────────────────
 function ReportViewer({ text, loading }: { text: string; loading: boolean }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -119,6 +562,57 @@ function ReportViewer({ text, loading }: { text: string; loading: boolean }) {
   }, [text]);
 
   if (!text && !loading) return null;
+
+  // Basic markdown-like formatting for section headers
+  const formatted = text.split("\n").map((line, i) => {
+    if (line.startsWith("## ")) {
+      return (
+        <h2 key={i} className="text-base font-bold text-zinc-900 mt-5 mb-2 border-b border-zinc-200 pb-1">
+          {line.slice(3)}
+        </h2>
+      );
+    }
+    if (line.startsWith("**") && line.endsWith("**")) {
+      return (
+        <p key={i} className="font-semibold text-zinc-800 mt-3 mb-1">
+          {line.slice(2, -2)}
+        </p>
+      );
+    }
+    if (line.startsWith("- ") || line.startsWith("* ")) {
+      return (
+        <li key={i} className="ml-4 text-sm text-zinc-700 list-disc">
+          {line.slice(2)}
+        </li>
+      );
+    }
+    if (line.startsWith("| ")) {
+      return (
+        <p key={i} className="font-mono text-xs text-zinc-600 bg-zinc-50 px-2 py-0.5">
+          {line}
+        </p>
+      );
+    }
+    if (line.trim() === "---") {
+      return <hr key={i} className="my-3 border-zinc-200" />;
+    }
+    if (line.trim() === "") {
+      return <br key={i} />;
+    }
+    // Inline bold
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <p key={i} className="text-sm text-zinc-700 leading-relaxed">
+        {parts.map((part, j) =>
+          part.startsWith("**") && part.endsWith("**") ? (
+            <strong key={j} className="text-zinc-800">{part.slice(2, -2)}</strong>
+          ) : (
+            <span key={j}>{part}</span>
+          )
+        )}
+      </p>
+    );
+  });
 
   return (
     <Card>
@@ -131,15 +625,19 @@ function ReportViewer({ text, loading }: { text: string; loading: boolean }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <pre
-          className="whitespace-pre-wrap font-sans text-sm text-zinc-800 leading-relaxed"
-          style={{ fontFamily: "inherit" }}
-        >
-          {text}
-        </pre>
+        <div className="space-y-0">{formatted}</div>
         <div ref={bottomRef} />
       </CardContent>
     </Card>
+  );
+}
+
+// ── Bolum Baslik Yardimcisi ──────────────────────────────────────────────────
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-sm font-semibold text-zinc-800 border-b border-zinc-100 pb-1 mb-3">
+      {children}
+    </h3>
   );
 }
 
@@ -167,13 +665,50 @@ export default function AgentPage() {
     setForm((f) => ({ ...f, [key]: val }));
   }
 
+  // Lesion management
+  function updateLesion(idx: number, lesion: Lesion) {
+    setForm((f) => ({
+      ...f,
+      lesions: f.lesions.map((l, i) => (i === idx ? lesion : l)),
+    }));
+  }
+  function addLesion() {
+    setForm((f) => ({ ...f, lesions: [...f.lesions, { ...emptyLesion }] }));
+  }
+  function removeLesion(idx: number) {
+    setForm((f) => ({
+      ...f,
+      lesions: f.lesions.filter((_, i) => i !== idx),
+    }));
+  }
+
+  // Brain lesion management
+  function updateBrainLesion(idx: number, lesion: BrainLesion) {
+    setForm((f) => ({
+      ...f,
+      brain_lesions: f.brain_lesions.map((l, i) => (i === idx ? lesion : l)),
+    }));
+  }
+  function addBrainLesion() {
+    setForm((f) => ({
+      ...f,
+      brain_lesions: [...f.brain_lesions, { ...emptyBrainLesion }],
+    }));
+  }
+  function removeBrainLesion(idx: number) {
+    setForm((f) => ({
+      ...f,
+      brain_lesions: f.brain_lesions.filter((_, i) => i !== idx),
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setReport("");
 
     if (!form.indication.trim()) {
-      setError("Endikasyon alanı zorunludur.");
+      setError("Endikasyon alani zorunludur.");
       return;
     }
 
@@ -210,9 +745,8 @@ export default function AgentPage() {
         if (done) break;
         buf += decoder.decode(value, { stream: true });
 
-        // Satırları ayır, "data: {...}" parse et
         const lines = buf.split("\n");
-        buf = lines.pop() ?? "";  // son yarım satır buffer'da kalsın
+        buf = lines.pop() ?? "";
 
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
@@ -237,25 +771,30 @@ export default function AgentPage() {
   async function copyReport() {
     try {
       await navigator.clipboard.writeText(report);
-      alert("Rapor kopyalandı ✅");
-    } catch {
-      alert("Kopyalanamadı");
-    }
+    } catch {}
   }
 
   if (!authed) return null;
 
+  const showAbdomen = form.region === "abdomen" || form.region === "both";
+  const showBrain = form.region === "brain" || form.region === "both";
+  const seqOptions = showAbdomen && showBrain
+    ? [...new Set([...ABDOMEN_SEQUENCES, ...BRAIN_SEQUENCES])]
+    : showBrain
+    ? BRAIN_SEQUENCES
+    : ABDOMEN_SEQUENCES;
+
   return (
     <div className="space-y-6">
-      {/* Başlık */}
+      {/* Baslik */}
       <div className="flex items-center justify-between">
         <div>
           <Link href="/" className="text-sm text-zinc-600 hover:underline">
-            ← Cases
+            &larr; Cases
           </Link>
           <h1 className="text-xl font-semibold mt-1">Radyolog Ajan</h1>
           <p className="text-sm text-zinc-500">
-            MRI vakasını yapılandırılmış radyolog akıl yürütmesiyle analiz eder
+            MRI vakasini yapilandirilmis radyolog akil yurutmesiyle analiz eder
           </p>
         </div>
         {report && (
@@ -266,17 +805,17 @@ export default function AgentPage() {
       </div>
 
       {/* Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Vaka Bilgileri</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-
-            {/* Bölge */}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* ─── 1. Klinik Bilgiler ──────────────────────────────────────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle>1. Klinik Bilgiler</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Bolge */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                İnceleme Bölgesi <span className="text-red-500">*</span>
+                Inceleme Bolgesi <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-3">
                 {(["abdomen", "brain", "both"] as const).map((r) => (
@@ -295,17 +834,17 @@ export default function AgentPage() {
               </div>
             </div>
 
-            {/* Yaş + Cinsiyet */}
+            {/* Yas + Cinsiyet */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Yaş</label>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">Yas</label>
                 <input
                   type="number"
                   min={0}
                   max={120}
                   value={form.age}
                   onChange={(e) => set("age", e.target.value)}
-                  placeholder="Örnek: 58"
+                  placeholder="Ornek: 58"
                   className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
                 />
               </div>
@@ -316,9 +855,9 @@ export default function AgentPage() {
                   onChange={(e) => set("gender", e.target.value)}
                   className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
                 >
-                  <option value="">Belirtilmemiş</option>
+                  <option value="">Belirtilmemis</option>
                   <option value="Erkek">Erkek</option>
-                  <option value="Kadın">Kadın</option>
+                  <option value="Kadin">Kadin</option>
                 </select>
               </div>
             </div>
@@ -332,7 +871,7 @@ export default function AgentPage() {
                 value={form.indication}
                 onChange={(e) => set("indication", e.target.value)}
                 rows={2}
-                placeholder="Örnek: Karaciğerde fokal lezyon – HCC ekarte edilmesi istenmiştir. Bilinen HCV(+) siroz."
+                placeholder="Ornek: Karacigerde fokal lezyon – HCC ekarte edilmesi istenmistir. Bilinen HCV(+) siroz."
                 className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
               />
             </div>
@@ -346,29 +885,29 @@ export default function AgentPage() {
                   onChange={(e) => set("contrast", e.target.checked)}
                   className="h-4 w-4 rounded border-zinc-300 accent-zinc-700"
                 />
-                Kontrastlı çekim yapıldı
+                Kontrastli cekim yapildi
               </label>
               {form.contrast && (
                 <input
                   type="text"
                   value={form.contrast_agent}
                   onChange={(e) => set("contrast_agent", e.target.value)}
-                  placeholder="Kontrast ajanı (ör: Gadoxetate / Primovist, Gadobutrol)"
+                  placeholder="Kontrast ajani (orn: Gadoxetate / Primovist, Gadobutrol)"
                   className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
                 />
               )}
             </div>
 
-            {/* Risk faktörleri */}
+            {/* Risk faktorleri */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Risk Faktörleri
+                Risk Faktorleri
               </label>
               <input
                 type="text"
                 value={form.risk_factors}
                 onChange={(e) => set("risk_factors", e.target.value)}
-                placeholder="Örnek: Siroz (Child-A), HBsAg(+), AFP 42 ng/mL, DM, hipertansiyon"
+                placeholder="Ornek: Siroz (Child-A), HBsAg(+), AFP 42 ng/mL, DM, hipertansiyon"
                 className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
               />
             </div>
@@ -376,47 +915,201 @@ export default function AgentPage() {
             {/* Ek notlar */}
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Ek Klinik Not / Önceki Tetkik
+                Ek Klinik Not / Onceki Tetkik
               </label>
               <textarea
                 value={form.notes}
                 onChange={(e) => set("notes", e.target.value)}
                 rows={2}
-                placeholder="Örnek: 6 ay önce çekilen MRI'da segment 6'da 12 mm lezyon izlenmişti."
+                placeholder="Ornek: 6 ay once cekilen MRI'da segment 6'da 12 mm lezyon izlenmisti."
                 className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
               />
             </div>
+          </CardContent>
+        </Card>
 
-            {/* DICOM yükleme */}
+        {/* ─── 2. Teknik Bilgiler (MRI Sekanslari) ─────────────────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle>2. Teknik Bilgiler</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-2">
-                DICOM Görüntüler{" "}
-                <span className="text-zinc-400 font-normal">
-                  (opsiyonel – T2, DWI, post-kontrast seriler önerilir)
-                </span>
+                Mevcut MRI Sekanslari
               </label>
-              <DicomDropzone files={dicomFiles} onFiles={setDicomFiles} />
+              <SequenceSelector
+                options={seqOptions}
+                selected={form.sequences}
+                onChange={(s) => set("sequences", s)}
+              />
+              <p className="text-xs text-zinc-400 mt-1">Mevcut sekans(lar)i secin</p>
             </div>
+          </CardContent>
+        </Card>
 
-            {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                {error}
+        {/* ─── 3. Goruntuleme Bulgulari ─────────────────────────────────── */}
+        {showAbdomen && (
+          <Card>
+            <CardHeader>
+              <CardTitle>3. Abdomen MRI Bulgulari</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Karaciger parankimi */}
+              <div>
+                <SectionLabel>Karaciger Parankimi</SectionLabel>
+                <textarea
+                  value={form.liver_parenchyma}
+                  onChange={(e) => set("liver_parenchyma", e.target.value)}
+                  rows={2}
+                  placeholder="orn: Boyut normal (~15 cm). Parankim homojen / noduler siroz paterni. Steato yok. Portal ven acik."
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
               </div>
-            )}
 
-            <div className="flex gap-2">
-              <Button type="submit" disabled={loading}>
-                {loading ? "Ajan analiz ediyor…" : "Analizi Başlat"}
-              </Button>
-              {loading && (
-                <span className="text-xs text-zinc-400 self-center">
-                  Bu işlem 30-60 saniye sürebilir
-                </span>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              {/* Fokal lezyonlar */}
+              <div>
+                <SectionLabel>Fokal Lezyon(lar)</SectionLabel>
+                <div className="space-y-3">
+                  {form.lesions.map((lesion, idx) => (
+                    <AbdomenLesionForm
+                      key={idx}
+                      lesion={lesion}
+                      index={idx}
+                      onChange={(l) => updateLesion(idx, l)}
+                      onRemove={() => removeLesion(idx)}
+                      canRemove={form.lesions.length > 1}
+                    />
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="mt-2 text-xs"
+                  onClick={addLesion}
+                >
+                  + Lezyon Ekle
+                </Button>
+              </div>
+
+              {/* Diger organlar */}
+              <div>
+                <SectionLabel>Diger Organlar</SectionLabel>
+                <textarea
+                  value={form.other_organs}
+                  onChange={(e) => set("other_organs", e.target.value)}
+                  rows={3}
+                  placeholder={"Safra kesesi: Normal / Tas(+) / Duvar kalinlasmasi\nPankreas: Normal boyut, Wirsung normal\nDalak: 11 cm, homojen\nBobrekler: Bilateral normal boyut, kist(-)\nAdrenal: Normal"}
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+
+              {/* Vaskuler */}
+              <div>
+                <SectionLabel>Vaskuler Yapilar & Periton</SectionLabel>
+                <textarea
+                  value={form.vascular}
+                  onChange={(e) => set("vascular", e.target.value)}
+                  rows={2}
+                  placeholder="orn: Portal ven acik, hepatik venler normal. Asit yok. LAP yok."
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showBrain && (
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {showAbdomen ? "4" : "3"}. Beyin MRI Bulgulari
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Genel degerlendirme */}
+              <div>
+                <SectionLabel>Genel Degerlendirme</SectionLabel>
+                <textarea
+                  value={form.brain_general}
+                  onChange={(e) => set("brain_general", e.target.value)}
+                  rows={3}
+                  placeholder={"orn: Serebral hemisferler simetrik. Gri-beyaz madde farklilasma normal.\nVentrikuler sistem normal boyutta, simetrik.\nOrta hat yapilarinda kayma yok."}
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+
+              {/* Fokal lezyonlar */}
+              <div>
+                <SectionLabel>Fokal Lezyon(lar)</SectionLabel>
+                <div className="space-y-3">
+                  {form.brain_lesions.map((lesion, idx) => (
+                    <BrainLesionForm
+                      key={idx}
+                      lesion={lesion}
+                      index={idx}
+                      onChange={(l) => updateBrainLesion(idx, l)}
+                      onRemove={() => removeBrainLesion(idx)}
+                      canRemove={form.brain_lesions.length > 1}
+                    />
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="mt-2 text-xs"
+                  onClick={addBrainLesion}
+                >
+                  + Lezyon Ekle
+                </Button>
+              </div>
+
+              {/* Diger bulgular */}
+              <div>
+                <SectionLabel>Diger Bulgular</SectionLabel>
+                <textarea
+                  value={form.brain_other}
+                  onChange={(e) => set("brain_other", e.target.value)}
+                  rows={2}
+                  placeholder="orn: Beyaz cevherde T2/FLAIR hiperintens odaklar. SWI'da mikrokanama. Sinuslerde retansiyon kisti."
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ─── DICOM (Opsiyonel) ──────────────────────────────────────── */}
+        <Card>
+          <CardHeader>
+            <CardTitle>DICOM Goruntuleri (Opsiyonel)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DicomDropzone files={dicomFiles} onFiles={setDicomFiles} />
+            <p className="text-xs text-zinc-400 mt-2">
+              Goruntu yuklerseniz ajan hem metin bulgularini hem de goruntuyu birlikte degerlendirir.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* ─── Hata & Submit ──────────────────────────────────────────── */}
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+            {error}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button type="submit" disabled={loading}>
+            {loading ? "Ajan analiz ediyor..." : "Analizi Baslat"}
+          </Button>
+          {loading && (
+            <span className="text-xs text-zinc-400 self-center">
+              Bu islem 30-60 saniye surebilir
+            </span>
+          )}
+        </div>
+      </form>
 
       {/* Streaming rapor */}
       <ReportViewer text={report} loading={loading} />

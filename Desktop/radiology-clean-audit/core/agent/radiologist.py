@@ -163,11 +163,130 @@ I → II → IIF → III → IV (cerrahi risk artar)
 - Klinik korelasyon gerektiğinde mutlaka belirt.
 - Bulguları ne abartma ne de minimize et; nesnel ve ölçülü ol.
 - Görüntü kalitesi değerlendirmeyi engelliyorsa bunu açıkça raporla.
+- Yapılandırılmış metin bulguları verildiğinde, bunları görüntülerden elde edilen
+  gözlemler gibi değerlendir ve aynı sistematik süreçle analiz et.
 """
 
 # ---------------------------------------------------------------------------
 # Agent çağırıcı
 # ---------------------------------------------------------------------------
+
+
+def _format_abdomen_lesion(lesion: dict, idx: int) -> str:
+    """Yapılandırılmış abdomen lezyon verisini metin açıklamaya dönüştür."""
+    parts = [f"  Lezyon {idx + 1}:"]
+    if lesion.get("location"):
+        parts.append(f"    Lokalizasyon: {lesion['location']}")
+    if lesion.get("size_mm"):
+        parts.append(f"    Boyut: {lesion['size_mm']} mm")
+    if lesion.get("t1_signal"):
+        parts.append(f"    T1 sinyal: {lesion['t1_signal']}")
+    if lesion.get("t2_signal"):
+        parts.append(f"    T2 sinyal: {lesion['t2_signal']}")
+    if lesion.get("dwi_restriction"):
+        parts.append("    DWI: Kısıtlanma mevcut")
+    if lesion.get("arterial_enhancement"):
+        parts.append(f"    Arteriyel faz: {lesion['arterial_enhancement']}")
+    if lesion.get("washout"):
+        parts.append("    Washout: Evet (portal/geç fazda)")
+    if lesion.get("capsule"):
+        parts.append("    Kapsül görünümü: Evet")
+    if lesion.get("additional"):
+        parts.append(f"    Ek: {lesion['additional']}")
+    return "\n".join(parts)
+
+
+def _format_brain_lesion(lesion: dict, idx: int) -> str:
+    """Yapılandırılmış beyin lezyon verisini metin açıklamaya dönüştür."""
+    parts = [f"  Lezyon {idx + 1}:"]
+    if lesion.get("location"):
+        parts.append(f"    Lokalizasyon: {lesion['location']}")
+    if lesion.get("size_mm"):
+        parts.append(f"    Boyut: {lesion['size_mm']} mm")
+    if lesion.get("t1_signal"):
+        parts.append(f"    T1 sinyal: {lesion['t1_signal']}")
+    if lesion.get("t2_flair_signal"):
+        parts.append(f"    T2/FLAIR sinyal: {lesion['t2_flair_signal']}")
+    if lesion.get("dwi_restriction"):
+        parts.append("    DWI: Kısıtlanma mevcut")
+    if lesion.get("enhancement"):
+        parts.append(f"    Kontrast tutulumu: {lesion['enhancement']}")
+    if lesion.get("additional"):
+        parts.append(f"    Ek: {lesion['additional']}")
+    return "\n".join(parts)
+
+
+def _build_findings_text(clinical_data: dict) -> str:
+    """Yapılandırılmış bulgu alanlarını radyoloji rapor formatına çevir."""
+    sections = []
+
+    # Mevcut MRI sekansları
+    sequences = clinical_data.get("sequences", [])
+    if sequences:
+        sections.append(f"MEVCUT MRI SEKANSLARI: {', '.join(sequences)}")
+
+    region = clinical_data.get("region", "abdomen")
+    show_abdomen = region in ("abdomen", "both")
+    show_brain = region in ("brain", "both")
+
+    # ── Abdomen bulguları ──
+    if show_abdomen:
+        abd_parts = ["ABDOMEN MRI BULGULARI:"]
+
+        liver = clinical_data.get("liver_parenchyma", "").strip()
+        if liver:
+            abd_parts.append(f"\nKaraciğer Parankimi:\n  {liver}")
+
+        lesions = clinical_data.get("lesions", [])
+        has_lesion = any(
+            l.get("location") or l.get("size_mm") or l.get("arterial_enhancement")
+            for l in lesions
+        )
+        if has_lesion:
+            abd_parts.append("\nFokal Karaciğer Lezyonları:")
+            for i, les in enumerate(lesions):
+                if les.get("location") or les.get("size_mm") or les.get("arterial_enhancement"):
+                    abd_parts.append(_format_abdomen_lesion(les, i))
+
+        other = clinical_data.get("other_organs", "").strip()
+        if other:
+            abd_parts.append(f"\nDiğer Organlar:\n  {other}")
+
+        vascular = clinical_data.get("vascular", "").strip()
+        if vascular:
+            abd_parts.append(f"\nVasküler Yapılar & Periton:\n  {vascular}")
+
+        if len(abd_parts) > 1:
+            sections.append("\n".join(abd_parts))
+
+    # ── Beyin bulguları ──
+    if show_brain:
+        brain_parts = ["BEYİN MRI BULGULARI:"]
+
+        general = clinical_data.get("brain_general", "").strip()
+        if general:
+            brain_parts.append(f"\nGenel Değerlendirme:\n  {general}")
+
+        brain_lesions = clinical_data.get("brain_lesions", [])
+        has_bl = any(
+            l.get("location") or l.get("size_mm") or l.get("enhancement")
+            for l in brain_lesions
+        )
+        if has_bl:
+            brain_parts.append("\nFokal Beyin Lezyonları:")
+            for i, les in enumerate(brain_lesions):
+                if les.get("location") or les.get("size_mm") or les.get("enhancement"):
+                    brain_parts.append(_format_brain_lesion(les, i))
+
+        other = clinical_data.get("brain_other", "").strip()
+        if other:
+            brain_parts.append(f"\nDiğer Bulgular:\n  {other}")
+
+        if len(brain_parts) > 1:
+            sections.append("\n".join(brain_parts))
+
+    return "\n\n".join(sections)
+
 
 def _build_content(clinical_data: dict, images: list[dict]) -> list:
     """Claude için mesaj içeriği oluştur (metin + görüntüler)."""
@@ -190,9 +309,20 @@ def _build_content(clinical_data: dict, images: list[dict]) -> list:
 • Endikasyon       : {clinical_data.get("indication") or "Belirtilmemiş"}
 • Kontrast         : {contrast_info}
 • Risk faktörleri  : {clinical_data.get("risk_factors") or "Yok"}
-• Ek klinik not    : {clinical_data.get("notes") or "-"}
+• Ek klinik not    : {clinical_data.get("notes") or "-"}"""
 
-Lütfen bu MRI vakasını yukarıdaki sistematik yapıya göre adım adım değerlendirin."""
+    # Yapılandırılmış bulgular varsa ekle
+    findings_text = _build_findings_text(clinical_data)
+
+    if findings_text:
+        clinical_text += f"\n\n{findings_text}"
+        clinical_text += "\n\nYukarıdaki klinik bilgiler ve görüntüleme bulgularını birlikte " \
+                         "değerlendirerek sistematik yapıya göre adım adım analiz yapın. " \
+                         "Verilen bulguları doğrulayın, uyumluluğunu değerlendirin ve " \
+                         "ayırıcı tanı/sınıflandırma sürecini çalıştırın."
+    else:
+        clinical_text += "\n\nLütfen bu MRI vakasını yukarıdaki sistematik yapıya göre " \
+                         "adım adım değerlendirin."
 
     content: list = [{"type": "text", "text": clinical_text}]
 
@@ -212,12 +342,22 @@ Lütfen bu MRI vakasını yukarıdaki sistematik yapıya göre adım adım değe
             }
         )
 
-    if not images:
+    if not images and not findings_text:
         content.append(
             {
                 "type": "text",
-                "text": "(Görüntü yüklenmedi. Yalnızca klinik verilere dayanarak "
-                        "olabildiğince değerlendirme yapın ve eksik görüntü bilgisini belirtin.)",
+                "text": "(Görüntü yüklenmedi ve yapılandırılmış bulgu girilmedi. "
+                        "Yalnızca klinik verilere dayanarak olabildiğince değerlendirme "
+                        "yapın ve eksik bilgiyi belirtin.)",
+            }
+        )
+    elif not images and findings_text:
+        content.append(
+            {
+                "type": "text",
+                "text": "(Görüntü yüklenmedi. Yukarıdaki yapılandırılmış metin bulgularını "
+                        "radyolog tarafından gözlenmiş veriler olarak kabul edin ve "
+                        "bu verilere dayanarak tam analiz yapın.)",
             }
         )
 
