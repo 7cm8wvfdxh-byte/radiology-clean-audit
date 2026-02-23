@@ -32,9 +32,14 @@ export default function NewCase() {
   const [form, setForm] = useState<FormState>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
-    if (!getToken()) router.replace("/login");
+    if (!getToken()) {
+      router.replace("/login");
+    } else {
+      setAuthed(true);
+    }
   }, []);
 
   function handleCheck(field: keyof FormState) {
@@ -89,6 +94,8 @@ export default function NewCase() {
       setLoading(false);
     }
   }
+
+  if (!authed) return null;
 
   return (
     <div className="space-y-4">
