@@ -115,15 +115,28 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) { onLogout(); return; }
     (async () => {
       try {
         setErr(null);
-        const res = await fetch(`${API}/cases`, { headers: authHeaders() });
-        if (res.status === 401) { clearToken(); onLogout(); return; }
+        const res = await fetch(`${API}/cases`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          clearToken();
+          onLogout();
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setItems(Array.isArray(data) ? data : []);
       } catch (e: any) {
+        if ((e?.message ?? "").includes("401")) {
+          clearToken();
+          onLogout();
+          return;
+        }
         setErr(e?.message ?? "Fetch error");
       } finally {
         setLoading(false);
