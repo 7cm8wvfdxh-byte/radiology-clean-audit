@@ -16,16 +16,30 @@ def _hmac_hex(secret: str, payload: bytes) -> str:
     return hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
 
 # -------- LI-RADS v2018 karar motoru --------
+def _lirads_result(category, label, applied, ancillary_favor_hcc, ancillary_favor_benign):
+    """Standart LI-RADS sonuç dict'i oluşturur."""
+    return {
+        "category": category,
+        "label": label,
+        "applied_criteria": applied,
+        "ancillary_favor_hcc": ancillary_favor_hcc,
+        "ancillary_favor_benign": ancillary_favor_benign,
+    }
+
+
 def run_lirads_decision(dsl: dict) -> dict:
     """
     LI-RADS v2018 kriterlerine göre HCC olasılık kategorisi döner.
+
+    Desteklenen kategoriler: LR-1, LR-2, LR-3, LR-4, LR-5, LR-M, LR-TIV.
 
     Dönüş:
         {
           "category": "LR-5",
           "label": "LR-5 (Definite HCC)",
           "applied_criteria": [...],
-          "ancillary_features": {...},
+          "ancillary_favor_hcc": [...],
+          "ancillary_favor_benign": [...],
         }
     """
     arterial   = bool((dsl.get("arterial_phase") or {}).get("hyperenhancement", False))
@@ -33,6 +47,13 @@ def run_lirads_decision(dsl: dict) -> dict:
     capsule    = bool((dsl.get("delayed_phase") or {}).get("capsule", False))
     size       = int(dsl.get("lesion_size_mm", 0))
     cirrhosis  = bool(dsl.get("cirrhosis", False))
+
+    # LR-TIV ve LR-M özellikleri
+    tumor_in_vein          = bool(dsl.get("tumor_in_vein", False))
+    rim_aphe               = bool(dsl.get("rim_aphe", False))
+    peripheral_washout     = bool(dsl.get("peripheral_washout", False))
+    delayed_central        = bool(dsl.get("delayed_central_enhancement", False))
+    infiltrative           = bool(dsl.get("infiltrative", False))
 
     # Ancillary features (yardımcı bulgular)
     ancillary  = dsl.get("ancillary_features") or {}
@@ -66,74 +87,79 @@ def run_lirads_decision(dsl: dict) -> dict:
 
     ancillary_positive = len(ancillary_favor_hcc) > 0
 
+    # --- LR-TIV: Tümör İçinde Ven (tüm kategorileri geçersiz kılar) ---
+    if tumor_in_vein:
+        applied.append("tumor_in_vein")
+        return _lirads_result(
+            "LR-TIV", "LR-TIV (Tumor in Vein)",
+            applied, ancillary_favor_hcc, ancillary_favor_benign,
+        )
+
+    # --- LR-M: Malign, muhtemelen HCC değil ---
+    # Targetoid kitle: rim APHE, periferal washout veya gecikmiş santral tutulum
+    # Veya infiltratif görünüm
+    targetoid = rim_aphe or peripheral_washout or delayed_central
+    if targetoid or infiltrative:
+        if rim_aphe:
+            applied.append("rim_aphe")
+        if peripheral_washout:
+            applied.append("peripheral_washout")
+        if delayed_central:
+            applied.append("delayed_central_enhancement")
+        if infiltrative:
+            applied.append("infiltrative_appearance")
+        return _lirads_result(
+            "LR-M", "LR-M (Malignant, not HCC specific)",
+            applied, ancillary_favor_hcc, ancillary_favor_benign,
+        )
+
     # --- LR-5: Kesin HCC ---
     # Majör kriter: siroz + arteriyel + (washout VEYA kapsül) + ≥10 mm
     if cirrhosis and arterial and size >= 10:
         major_features = sum([washout, capsule])
         if major_features >= 2:
-            return {
-                "category": "LR-5",
-                "label": "LR-5 (Definite HCC)",
-                "applied_criteria": applied,
-                "ancillary_favor_hcc": ancillary_favor_hcc,
-                "ancillary_favor_benign": ancillary_favor_benign,
-            }
+            return _lirads_result(
+                "LR-5", "LR-5 (Definite HCC)",
+                applied, ancillary_favor_hcc, ancillary_favor_benign,
+            )
         if major_features == 1 and size >= 20:
             # ≥20 mm + 1 majör kriter → LR-5
-            return {
-                "category": "LR-5",
-                "label": "LR-5 (Definite HCC)",
-                "applied_criteria": applied,
-                "ancillary_favor_hcc": ancillary_favor_hcc,
-                "ancillary_favor_benign": ancillary_favor_benign,
-            }
+            return _lirads_result(
+                "LR-5", "LR-5 (Definite HCC)",
+                applied, ancillary_favor_hcc, ancillary_favor_benign,
+            )
 
     # --- LR-4: Muhtemel HCC ---
     # Siroz + arteriyel + ≥10 mm + 1 majör kriter veya ancillary
     if cirrhosis and arterial and size >= 10:
         if washout or capsule or ancillary_positive:
-            return {
-                "category": "LR-4",
-                "label": "LR-4 (Probable HCC)",
-                "applied_criteria": applied,
-                "ancillary_favor_hcc": ancillary_favor_hcc,
-                "ancillary_favor_benign": ancillary_favor_benign,
-            }
+            return _lirads_result(
+                "LR-4", "LR-4 (Probable HCC)",
+                applied, ancillary_favor_hcc, ancillary_favor_benign,
+            )
 
     # --- LR-3: Orta olasılık ---
     if cirrhosis and arterial and size >= 10:
-        return {
-            "category": "LR-3",
-            "label": "LR-3 (Intermediate probability)",
-            "applied_criteria": applied,
-            "ancillary_favor_hcc": ancillary_favor_hcc,
-            "ancillary_favor_benign": ancillary_favor_benign,
-        }
+        return _lirads_result(
+            "LR-3", "LR-3 (Intermediate probability)",
+            applied, ancillary_favor_hcc, ancillary_favor_benign,
+        )
     if arterial and size < 10:
-        return {
-            "category": "LR-3",
-            "label": "LR-3 (Intermediate probability)",
-            "applied_criteria": applied,
-            "ancillary_favor_hcc": ancillary_favor_hcc,
-            "ancillary_favor_benign": ancillary_favor_benign,
-        }
+        return _lirads_result(
+            "LR-3", "LR-3 (Intermediate probability)",
+            applied, ancillary_favor_hcc, ancillary_favor_benign,
+        )
     if cirrhosis and arterial and ancillary_positive:
-        return {
-            "category": "LR-3",
-            "label": "LR-3 (Intermediate probability)",
-            "applied_criteria": applied,
-            "ancillary_favor_hcc": ancillary_favor_hcc,
-            "ancillary_favor_benign": ancillary_favor_benign,
-        }
+        return _lirads_result(
+            "LR-3", "LR-3 (Intermediate probability)",
+            applied, ancillary_favor_hcc, ancillary_favor_benign,
+        )
 
     # --- LR-2: Muhtemelen benign ---
-    return {
-        "category": "LR-2",
-        "label": "LR-2 (Probably benign)",
-        "applied_criteria": applied,
-        "ancillary_favor_hcc": ancillary_favor_hcc,
-        "ancillary_favor_benign": ancillary_favor_benign,
-    }
+    return _lirads_result(
+        "LR-2", "LR-2 (Probably benign)",
+        applied, ancillary_favor_hcc, ancillary_favor_benign,
+    )
 
 # -------- BUILD PACK --------
 def build_pack(case_id: str, dsl: dict, verify_base_url: str, previous_pack: dict = None) -> dict:
@@ -278,12 +304,25 @@ def extract_dsl_from_findings(clinical_data: dict) -> dict:
         size_str = str(les.get("size_mm", "0")).strip()
         size = int(size_str) if size_str.isdigit() else 0
 
+        # LR-M: rim APHE + targetoid özellikler
+        peripheral_washout = bool(les.get("peripheral_washout", False))
+        delayed_central = bool(les.get("delayed_central_enhancement", False))
+        infiltrative = bool(les.get("infiltrative", False))
+
+        # LR-TIV: tümör-içi ven
+        tumor_in_vein = bool(les.get("tumor_in_vein", False))
+
         dsl = {
             "arterial_phase": {"hyperenhancement": aphe},
             "portal_phase": {"washout": washout},
             "delayed_phase": {"capsule": capsule},
             "lesion_size_mm": size,
             "cirrhosis": cirrhosis,
+            "rim_aphe": is_rim_only,
+            "peripheral_washout": peripheral_washout,
+            "delayed_central_enhancement": delayed_central,
+            "infiltrative": infiltrative,
+            "tumor_in_vein": tumor_in_vein,
         }
 
         # Ancillary features from DWI
@@ -299,8 +338,11 @@ def extract_dsl_from_findings(clinical_data: dict) -> dict:
         if ancillary:
             dsl["ancillary_features"] = ancillary
 
-        # Risk skoru: major kriterler + boyut
-        score = sum([aphe, washout, capsule]) * 10 + size
+        # Risk skoru: LR-TIV ve LR-M en yüksek önceliğe sahip
+        # Sonra major kriterler + boyut
+        lr_m_score = 100 if (is_rim_only or peripheral_washout or delayed_central or infiltrative) else 0
+        lr_tiv_score = 200 if tumor_in_vein else 0
+        score = lr_tiv_score + lr_m_score + sum([aphe, washout, capsule]) * 10 + size
         if score > best_score:
             best_score = score
             best_dsl = dsl

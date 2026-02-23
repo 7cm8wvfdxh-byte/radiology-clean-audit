@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Text, ForeignKey
+from sqlalchemy import Column, String, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 from db import Base
 
@@ -28,6 +28,24 @@ class Case(Base):
 
     # audit pack JSON'u text olarak saklıyoruz
     audit_pack_json = Column(Text, nullable=False)
+
+
+class CaseVersion(Base):
+    """Her vaka güncellemesinin geçmişini tutar (audit trail)."""
+    __tablename__ = "case_versions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    case_id = Column(String, ForeignKey("cases.case_id"), nullable=False, index=True)
+    version = Column(Integer, nullable=False)
+    created_at = Column(String, nullable=False)
+    created_by = Column(String, nullable=True)
+    audit_pack_json = Column(Text, nullable=False)
+
+    case = relationship("Case", back_populates="versions")
+
+
+# Case tablosuna versions ilişkisi ekle
+Case.versions = relationship("CaseVersion", back_populates="case", order_by=CaseVersion.version.desc())
 
 
 class User(Base):

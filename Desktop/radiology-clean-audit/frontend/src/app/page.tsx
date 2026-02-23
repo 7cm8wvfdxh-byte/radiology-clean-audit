@@ -151,9 +151,15 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
           <h1 className="text-xl font-semibold">Cases</h1>
           <div className="text-sm text-zinc-500">Vaka listesi</div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/dashboard">
+            <Button>Dashboard</Button>
+          </Link>
           <Link href="/agent">
             <Button>Radyolog Ajan</Button>
+          </Link>
+          <Link href="/compare">
+            <Button variant="secondary">Karsilastir</Button>
           </Link>
           <Link href="/new">
             <Button variant="secondary">+ Yeni Vaka</Button>

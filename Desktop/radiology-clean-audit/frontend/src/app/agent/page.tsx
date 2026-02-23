@@ -20,6 +20,10 @@ type Lesion = {
   arterial_enhancement: string;
   washout: boolean;
   capsule: boolean;
+  peripheral_washout: boolean;
+  delayed_central_enhancement: boolean;
+  infiltrative: boolean;
+  tumor_in_vein: boolean;
   additional: string;
 };
 
@@ -65,6 +69,10 @@ const emptyLesion: Lesion = {
   arterial_enhancement: "",
   washout: false,
   capsule: false,
+  peripheral_washout: false,
+  delayed_central_enhancement: false,
+  infiltrative: false,
+  tumor_in_vein: false,
   additional: "",
 };
 
@@ -377,7 +385,7 @@ function AbdomenLesionForm({
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-4 flex-wrap">
         <label className="flex items-center gap-1.5 cursor-pointer text-sm">
           <input
             type="checkbox"
@@ -396,6 +404,60 @@ function AbdomenLesionForm({
           />
           <span className="text-xs text-zinc-600">Kapsul gorunumu</span>
         </label>
+      </div>
+
+      {/* LR-M / LR-TIV Ozellikleri */}
+      <div className="border-t border-zinc-200 pt-3 space-y-2">
+        <div className="text-xs font-medium text-zinc-500">LR-M / LR-TIV Ozellikleri</div>
+        <div className="flex gap-4 flex-wrap">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.peripheral_washout}
+              onChange={(e) => set("peripheral_washout", e.target.checked)}
+              className="h-3.5 w-3.5 accent-purple-700"
+            />
+            <span className="text-xs text-zinc-600">Periferal washout (targetoid)</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.delayed_central_enhancement}
+              onChange={(e) => set("delayed_central_enhancement", e.target.checked)}
+              className="h-3.5 w-3.5 accent-purple-700"
+            />
+            <span className="text-xs text-zinc-600">Gecikmiş santral tutulum (targetoid)</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.infiltrative}
+              onChange={(e) => set("infiltrative", e.target.checked)}
+              className="h-3.5 w-3.5 accent-purple-700"
+            />
+            <span className="text-xs text-zinc-600">Infiltratif gorunum</span>
+          </label>
+        </div>
+        <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+          <input
+            type="checkbox"
+            checked={lesion.tumor_in_vein}
+            onChange={(e) => set("tumor_in_vein", e.target.checked)}
+            className="h-3.5 w-3.5 accent-red-700"
+          />
+          <span className="text-xs text-red-700 font-medium">Tumor in Vein (LR-TIV)</span>
+        </label>
+        {lesion.tumor_in_vein && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+            LR-TIV: Vende tumor invazyonu tum diger LI-RADS kategorilerini gecersiz kilar.
+          </p>
+        )}
+        {(lesion.peripheral_washout || lesion.delayed_central_enhancement || lesion.infiltrative ||
+          lesion.arterial_enhancement === "rim enhansman") && !lesion.tumor_in_vein && (
+          <p className="text-xs text-purple-600 bg-purple-50 border border-purple-200 rounded px-2 py-1">
+            LR-M: Targetoid/infiltratif ozellikler HCC-disi maligniteyi dusundurur (orn: iCCA).
+          </p>
+        )}
       </div>
 
       <div>
@@ -642,6 +704,7 @@ const LIRADS_COLORS: Record<string, string> = {
   "LR-4": "bg-orange-50 text-orange-800 border-orange-300",
   "LR-5": "bg-red-50 text-red-800 border-red-300",
   "LR-M": "bg-purple-50 text-purple-800 border-purple-300",
+  "LR-TIV": "bg-red-100 text-red-900 border-red-400",
 };
 
 function LiradsBadge({ category, label }: { category: string; label: string }) {

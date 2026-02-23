@@ -22,7 +22,7 @@ from core.auth import (
 )
 from core.agent.dicom_utils import extract_images_from_dicom
 from core.agent.radiologist import stream_radiologist_analysis, stream_followup
-from store.store import save_case, get_case, list_cases
+from store.store import save_case, get_case, list_cases, get_case_stats, get_case_versions
 from store.user_store import ensure_default_admin, get_user
 from store.patient_store import create_patient, get_patient, list_patients, get_patient_cases
 
@@ -143,6 +143,30 @@ def get_case_detail(
     if pack is None:
         raise HTTPException(status_code=404, detail="Case not found")
     return pack
+
+
+# ---------------------------------------------------------------------------
+# Audit Trail (version history)
+# ---------------------------------------------------------------------------
+@app.get("/cases/{case_id}/versions", tags=["cases"])
+def get_case_versions_endpoint(
+    case_id: str,
+    user: UserInToken = Depends(get_current_user),
+):
+    """Bir vakanın tüm versiyon geçmişini döner (audit trail)."""
+    pack = get_case(case_id)
+    if pack is None:
+        raise HTTPException(status_code=404, detail="Case not found")
+    return get_case_versions(case_id)
+
+
+# ---------------------------------------------------------------------------
+# Stats (dashboard)
+# ---------------------------------------------------------------------------
+@app.get("/stats", tags=["stats"])
+def stats(user: UserInToken = Depends(get_current_user)):
+    """LI-RADS dağılımı, toplam vaka/hasta sayısı, yüksek riskli vakalar."""
+    return get_case_stats()
 
 
 # ---------------------------------------------------------------------------
