@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { getToken, clearToken, authHeaders } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
@@ -31,6 +32,10 @@ export default function NewCase() {
   const [form, setForm] = useState<FormState>(defaultForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!getToken()) router.replace("/login");
+  }, []);
 
   function handleCheck(field: keyof FormState) {
     setForm((f) => ({ ...f, [field]: !f[field] }));
@@ -68,10 +73,11 @@ export default function NewCase() {
         `${API}/analyze/${encodeURIComponent(form.case_id.trim())}`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify(body),
         }
       );
+      if (res.status === 401) { clearToken(); router.replace("/login"); return; }
       if (!res.ok) {
         const detail = await res.json().catch(() => ({}));
         throw new Error(detail?.detail ?? `HTTP ${res.status}`);

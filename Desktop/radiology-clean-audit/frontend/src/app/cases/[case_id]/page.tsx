@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { getToken, clearToken, authHeaders } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export default function CaseDetail({ params }: { params: { case_id: string } }) {
+  const router = useRouter();
   const caseId = useMemo(() => decodeURIComponent(params.case_id), [params.case_id]);
 
   const [data, setData] = useState<any>(null);
@@ -15,11 +18,17 @@ export default function CaseDetail({ params }: { params: { case_id: string } }) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) { router.replace("/login"); return; }
+
     (async () => {
       try {
         setErr(null);
         setLoading(true);
-        const res = await fetch(`${API}/cases/${encodeURIComponent(caseId)}`);
+        const res = await fetch(`${API}/cases/${encodeURIComponent(caseId)}`, {
+          headers: authHeaders(),
+        });
+        if (res.status === 401) { clearToken(); router.replace("/login"); return; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         setData(json);
@@ -43,9 +52,14 @@ export default function CaseDetail({ params }: { params: { case_id: string } }) 
     }
   }
 
-  function openPdf() {
-    // backend direkt PDF veriyorsa:
-    window.open(`${API}/export/pdf/${encodeURIComponent(caseId)}`, "_blank");
+  async function openPdf() {
+    const res = await fetch(`${API}/export/pdf/${encodeURIComponent(caseId)}`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) { alert("PDF alınamadı"); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
   }
 
   function openVerify() {

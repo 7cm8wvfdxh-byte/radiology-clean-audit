@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { getToken, clearToken, authHeaders } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
@@ -14,15 +16,20 @@ type CaseItem = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [items, setItems] = useState<CaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) { router.replace("/login"); return; }
+
     (async () => {
       try {
         setErr(null);
-        const res = await fetch(`${API}/cases`);
+        const res = await fetch(`${API}/cases`, { headers: authHeaders() });
+        if (res.status === 401) { clearToken(); router.replace("/login"); return; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setItems(Array.isArray(data) ? data : []);
