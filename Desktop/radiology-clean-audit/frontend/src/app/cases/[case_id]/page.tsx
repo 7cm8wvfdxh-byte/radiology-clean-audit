@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
@@ -9,9 +9,10 @@ import { getToken, clearToken, authHeaders } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
-export default function CaseDetail({ params }: { params: { case_id: string } }) {
+export default function CaseDetail({ params }: { params: Promise<{ case_id: string }> }) {
   const router = useRouter();
-  const caseId = useMemo(() => decodeURIComponent(params.case_id), [params.case_id]);
+  const { case_id } = use(params);
+  const caseId = useMemo(() => decodeURIComponent(case_id), [case_id]);
 
   const [data, setData] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
