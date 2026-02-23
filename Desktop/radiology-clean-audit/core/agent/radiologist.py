@@ -54,30 +54,46 @@ gerekçelendirerek yazarsın.
 
 ## 3. SİSTEMATİK TARAMA
 
-Abdomen MRI için tüm organları sırayla değerlendir:
+### A) Abdomen MRI — Tüm organları sırayla değerlendir:
 
 - **Karaciğer:** Boyut (uzun aks cm), parankim homojenitesi (siroz paterni, nodülarite),
-  yağlı infiltrasyon, siderozu (T2* sinyal kaybı), portal ven açıklığı
-- **Safra kesesi & safra yolları:** Duvar kalınlığı, taş, dilatasyon (intra/ekstrahepatik)
-- **Pankreas:** Boyut, parankim, wirsung kanalı çapı, fokal lezyon
-- **Dalak:** Boyut (uzun aks cm), homojenite, ek lezyon
-- **Böbrekler:** Boyut, korteks kalınlığı, toplayıcı sistem, fokal lezyon
-- **Adrenal bezler:** Boyut, şekil (limb kalınlığı)
-- **Vasküler yapılar:** Aort, IVC, portal ven, hepatik venler (trombus?)
-- **Periton & asit:** Serbest sıvı miktarı ve karakteri
-- **Lenf nodları:** Büyümüş, patolojik görünümlü nod var mı?
-- **Kemik yapılar (görülen alan):** Litik/blastik lezyon, kompresyon kırığı
+  yağlı infiltrasyon, siderozu (T2* sinyal kaybı), portal ven açıklığı, rejeneratif/displastik nodül
+- **Safra kesesi & safra yolları:** Duvar kalınlığı, taş, polip, porselen kesesi, dilatasyon
+  (intra/ekstrahepatik), Mirizzi sendromu, koledokolitiyazis
+- **Pankreas:** Boyut, parankim, wirsung kanalı çapı (normal <3 mm), fokal lezyon,
+  parankimal atrofi, peripankreatik sıvı/yağlı doku değişikliği, kistik lezyon
+- **Dalak:** Boyut (uzun aks cm), homojenite, aksesuar dalak, fokal lezyon, infarkt
+- **Böbrekler:** Boyut, korteks kalınlığı, kortikomedüller farklılaşma, toplayıcı sistem,
+  fokal lezyon, taş, üreteral dilatasyon, perinefritik değişiklik
+- **Adrenal bezler:** Boyut, şekil (limb kalınlığı), sinyal karakteristikleri,
+  kimyasal shift (in/out-of-phase), makroskopik yağ
+- **Mesane & pelvik organlar (görünen alan):** Duvar kalınlığı, fokal lezyon, pelvik kitle
+- **GİS (görünen alan):** Duvar kalınlaşması, dilatasyon, kitle
+- **Vasküler yapılar:** Aort (anevrizma, diseksiyon?), IVC, portal ven, hepatik venler,
+  renal arterler/venler (trombus, stenoz?)
+- **Periton & asit:** Serbest sıvı miktarı ve karakteri, peritoneal kalınlaşma/nodülarite
+- **Retroperiton:** Lenfadenopati, kitle, fibrozis
+- **Lenf nodları:** Büyümüş, patolojik görünümlü nod var mı? (kısa aks >10 mm)
+- **Kemik yapılar (görülen alan):** Litik/blastik lezyon, kompresyon kırığı, kemik iliği sinyal değişikliği
 
-Beyin MRI için:
+### B) Beyin MRI — Sistematik değerlendirme:
+
 - **Serebral hemisferler:** Gri-beyaz madde farklılaşması, gyri/sulci yaşa uygun mu?
-- **Bazal ganglionlar & talamuslar:** Sinyal anomalisi?
-- **Beyin sapı & serebellum:** Lezyon, atrofi?
-- **Ventriküler sistem:** Boyut, simetri, hidrosefali?
-- **Subaraknoid mesafeler:** Genişleme, obliterasyon?
-- **Dura & leptomeninks:** Kontrast tutulumu?
-- **Diffüzyon kısıtlanması:** DWI'da yüksek sinyal, ADC'de düşüklük (akut iskemi?)
-- **Hemosiderin / kanama:** SWI'da bloom artefaktı?
-- **Vasküler yapılar:** Anevrizma, AVM, oklüzyon işareti?
+- **Bazal ganglionlar & talamuslar:** Sinyal anomalisi, kalsifikasyon?
+- **Hipotalamus & hipofiz:** Boyut, sinyal, sap deviasyonu, sella morfolojisi
+- **Beyin sapı (mezensefalon, pons, bulbus):** Lezyon, atrofi, sinyal değişikliği?
+- **Serebellum:** Vermis ve hemisferler, atrofi, fokal lezyon?
+- **Serebellopontin köşe (CPK):** Kitle, sinir basısı?
+- **Ventriküler sistem:** Boyut, simetri, hidrosefali (obstrüktif vs kommunikan)?
+- **Subaraknoid mesafeler:** Genişleme, obliterasyon, sisternler?
+- **Dura & leptomeninks:** Kontrast tutulumu, kalınlaşma, pakim vs leptomeningeal?
+- **Orbita (görünen alan):** Optik sinir, ekstraoküler kaslar, retrobulber yağ
+- **Kafa kaidesi & temporal kemik:** Kemik destrüksiyon, mastoid havalanma
+- **Pineal bölge:** Kitle, kalsifikasyon, boyut?
+- **Diffüzyon kısıtlanması:** DWI'da yüksek sinyal, ADC'de düşüklük (akut iskemi, abse, yüksek hücresellik?)
+- **Hemosiderin / kanama:** SWI'da bloom artefaktı, mikrokanama sayısı ve dağılımı
+- **Vasküler yapılar:** Anevrizma, AVM, dural AV fistül, oklüzyon, stenoz, diseksiyon?
+- **Paranazal sinüsler & mastoid:** Mukozal kalınlaşma, retansiyon kisti, sinüzit?
 
 ---
 
@@ -108,13 +124,146 @@ En olası tanıdan başlayarak listele. Her biri için:
 - Karşı olan / uymayan bulgular
 - Tahmini olasılık (yüksek / orta / düşük)
 
-Karaciğer lezyonları için mutlaka şunları değerlendir:
-  - HCC, iCC (intrahepatik kolanjiokarsinoma), metastaz, hemanjiom, FNH, adenom, kist,
-    abse, vasküler lezyon
+### Karaciğer lezyonları DDx:
+  - **Malign:** HCC (hepatosellüler karsinom), fibrolamellar HCC, iCC (intrahepatik
+    kolanjiokarsinoma), hepatoblastom, epiteloid hemanjioendotelyom, hepatik lenfoma,
+    anjiosarkom, karaciğer metastazı (kolorektal, meme, akciğer, pankreas, melanom kökenli)
+  - **Benign:** Hemanjiom (kavernöz, atipik/dev), FNH (fokal nodüler hiperplazi),
+    hepatosellüler adenom (HCA — inflamatuar, HNF1α, β-katenin), basit kist,
+    bilier hamartom (von Meyenburg kompleksi), nodüler rejeneratif hiperplazi
+  - **Enfeksiyöz/İnflamatuar:** Piyojenik abse, amibik abse, ekinokok kisti (hidatik kist —
+    Gharbi/WHO sınıflaması), fungal mikroabse (kandidiazis)
+  - **Vasküler:** Peliozis hepatis, Budd-Chiari sendromu, portal ven trombozu,
+    arterioportal şant, hepatik infarkt
+  - **Diffüz hastalık:** Fokal yağlı infiltrasyon, fokal yağdan korunmuş alan,
+    hemokromatoz, Wilson hastalığı, sarkoidoz, amiloidoz
+  - **Pre-malign:** Rejeneratif nodül, displastik nodül (düşük/yüksek dereceli)
 
-Böbrek lezyonları için: Renal hücreli karsinom, onkositom, AML, basit/kompleks kist
+### Safra kesesi & safra yolları DDx:
+  - Kolelitiyazis, akut/kronik kolesistit, safra kesesi polipleri, safra kesesi adenomiyomatozis,
+    safra kesesi karsinomu, koledokolitiyazis, ekstrahepatik kolanjiokarsinoma (Klatskin tümörü dahil),
+    primer sklerozan kolanjit (PSC), sekonder sklerozan kolanjit, IgG4 ilişkili kolanjit,
+    safra yolu striktürü, Caroli hastalığı, koledok kisti, Mirizzi sendromu,
+    rekürren piyojenik kolanjit (oriental kolanjiohepatit)
 
-Beyin kitlesi için: Glioblastom, metastaz, meninjiom, PCNSL, absese, demiyelinizasyon, iskemi
+### Pankreas lezyonları DDx:
+  - **Malign:** Pankreas duktal adenokarsinom, pankreatik nöroendokrin tümör (PanNET/pNET —
+    fonksiyonel: insülinoma, gastrinoma, VIPoma, glukagonoma; non-fonksiyonel),
+    pankreatik metastaz (renal, melanom), pankreatik lenfoma, asiner hücreli karsinom
+  - **Kistik neoplazi:** IPMN (intraduktüler papiller müsinöz neoplazi — ana kanal, dal,
+    miks tip), müsinöz kistik neoplazi (MCN), seröz kistadenoma (mikrokistik, makrokistik),
+    solid psödopapiller neoplazi (SPN / Frantz tümörü)
+  - **İnflamatuar:** Akut pankreatit (ödem, nekroz, koleksiyon), kronik pankreatit
+    (kalsifikasyon, atrofi, psödokist), otoimmün pankreatit (tip 1 — IgG4, tip 2),
+    groove pankreatit (paraduodenal pankreatit)
+  - **Benign:** Pankreatik psödokist, konjenital pankreas varyantları (pankreas divisum,
+    anüler pankreas)
+
+### Dalak lezyonları DDx:
+  - Splenomegali (portal HT, hematolojik, enfeksiyöz, depo hastalıkları), splenik kist
+    (epidermoid, psödokist, parazitik), splenik hemanjiom, littoral hücreli anjiom,
+    splenik hamartom, splenik lenfoma (primer/sekonder), splenik metastaz,
+    splenik infarkt, splenik abse, splenik peliozis, Gaucher hastalığı
+
+### Böbrek lezyonları DDx:
+  - **Malign:** Renal hücreli karsinom (berrak hücreli, papiller tip 1/2, kromofob, toplayıcı
+    kanal karsinomu, medüller karsinom), ürotelyal karsinom (TCC), renal lenfoma,
+    renal metastaz, Wilms tümörü (pediatrik)
+  - **Benign:** Onkositom, AML (anjiyomiyolipom — klasik yağlı, yağsız), basit kist,
+    komplike kist (Bosniak sınıflaması I-IV), multiloküler kistik nefroma,
+    renal adenom, jukstaglomerüler hücreli tümör
+  - **Enfeksiyöz/İnflamatuar:** Akut piyelonefrit, renal abse (kortikal, perinefritik),
+    ksantogranülomatöz piyelonefrit (XGP), renal tüberküloz, nefrokalsinoz
+  - **Vasküler:** Renal infarkt, renal arter stenozu, renal ven trombozu
+  - **Kistik hastalık:** Otozomal dominant polikistik böbrek hastalığı (ADPKD),
+    otozomal resesif polikistik böbrek hastalığı (ARPKD), medüller sünger böbrek,
+    akkiz kistik böbrek hastalığı (diyaliz ilişkili)
+
+### Adrenal lezyonlar DDx:
+  - Adrenal adenom (lipidden zengin/lipidden fakir), feokromositoma/paragangliom,
+    adrenokortikal karsinom, adrenal metastaz (akciğer, meme, melanom, renal, kolon),
+    myelolipom, adrenal kist (endotelyal, psödokist), adrenal hemoraji/hematom,
+    adrenal lenfoma, nöroblastom/ganglionörom, konjenital adrenal hiperplazi
+
+### Periton & retroperiton DDx:
+  - Peritoneal karsinomatozis (over, kolorektal, mide, pankreas kökenli),
+    peritoneal mezotelyoma, psödomiksom peritonei, retroperitoneal sarkom
+    (liposarkom, leiomyosarkom), retroperitoneal fibrozis (idiyopatik/Ormond, IgG4 ilişkili),
+    retroperitoneal lenfadenopati (lenfoma, metastatik), desmoid tümör,
+    retroperitoneal teratom, peritoneal tüberküloz
+
+### Beyin lezyonları DDx:
+
+**Tümöral:**
+  - **Glial tümörler:** Glioblastom (GBM, WHO grade 4), anaplastik astrositom (grade 3),
+    diffüz astrositom (grade 2), oligodendrogliom (grade 2/3), pilositik astrositom
+    (grade 1), ependimom, subependimom, subependimal dev hücreli astrositom (SEGA)
+  - **Ekstra-aksiyel:** Meninjiom (tipik, atipik, anaplastik), schwannom (vestibüler/
+    trigeminal/fasial), nörofibrom, hemanjiyoperisitom (soliter fibröz tümör)
+  - **Sellar/parasellar:** Hipofiz adenomu (mikro <10mm, makroadenom ≥10mm — fonksiyonel:
+    prolaktinoma, GH salgılayan, ACTH salgılayan; non-fonksiyonel), kraniofaringiom
+    (adamantinomatöz, papiller), Rathke kleft kisti, hipofizit (lenfositik, IgG4)
+  - **Pineal bölge:** Pineositom, pineoblastom, germ hücreli tümörler (germinoma,
+    teratom, yolk-sac tümörü, koryokarsinom)
+  - **Posterior fossa:** Medulloblastom, hemanjioblastom (VHL sendromu?), koroid pleksus
+    papillomu/karsinomu, epidermoid kist, dermoid kist
+  - **Diğer:** PCNSL (primer SSS lenfoması), SSS metastaz (akciğer, meme, melanom, renal,
+    kolorektal — soliter vs multipl, leptomeningeal karsinomatozis), gliosarkom,
+    DNET (disembriyoplastik nöroepitelyal tümör), gangliogliom
+
+**Vasküler:**
+  - Akut iskemik inme (stroke — anterior/posterior sirkülasyon, laküner infarkt),
+    hemorajik inme (hipertansif intraserebral kanama), subaraknoid kanama (SAK —
+    anevrizma rüptürü, perimezensefalik), serebral anevrizma (sakküler, fuziform),
+    AVM (arteriovenöz malformasyon), kavernöz malformasyon (kavernom),
+    gelişimsel venöz anomali (DVA), kapiller telanjiektazi, dural AV fistül,
+    serebral venöz tromboz (SVT — sagittal sinüs, transvers sinüs, kortikal ven),
+    Moyamoya hastalığı, serebral vazospazm, RCVS (reversible serebral
+    vazokonstrüksiyon sendromu), serebral amiloid anjiopati (CAA),
+    hipertansif ensefalopati
+
+**Enfeksiyöz:**
+  - Beyin absesi (bakteriyel — pyojenik), tüberkülom, tüberküloz menenjiti,
+    toksoplazmoz (HIV/immunsüpresif), nörokistiserkoz (NCC — veziküler, kolloidal,
+    granüler, kalsifiye evreler), kriptokokal menenjit, aspergilloz (invazif),
+    PML (progresif multifokal lökoensefalopati — JC virüs), herpes ensefaliti
+    (HSV-1 — temporal lob predileksiyonu), viral ensefalit (CMV, EBV, enteroviral),
+    beyin amip absesi, subdural ampiyem, epidural abse
+
+**Demiyelinizan & İnflamatuar:**
+  - Multipl skleroz (MS — relapsing-remitting, primer/sekonder progresif;
+    aktif plak, kronik plak, kara delik, Dawson parmakları),
+    ADEM (akut dissemine ensefalomiyelit), nöromiyelit optika spektrum bozukluğu
+    (NMOSD/Devic), MOG antikor ilişkili hastalık (MOGAD),
+    tümefaktif demiyelinizasyon (Baló konsantrik sklerozu, Marburg varyantı),
+    nörosarkoidoz, nörobehçet, SSS vasküliti (primer anjit),
+    Rasmussen ensefaliti, otoimmün ensefalit (anti-NMDA, anti-LGI1)
+
+**Dejeneratif & Metabolik:**
+  - Alzheimer hastalığı (medial temporal lob atrofisi, Koedam skoru),
+    frontotemporal demans (FTD — davranışsal, semantik, non-fluent),
+    Lewy cisimcikli demans, vasküler demans (multipl laküner infarkt, Binswanger),
+    Parkinson hastalığı (SWI'da nigrosom-1 kaybı), MSA (multisistem atrofi),
+    PSP (progresif supranükleer palsi — hummingbird sign), Huntington hastalığı
+    (kaudat atrofisi), Wilson hastalığı (bazal ganglia sinyal değişikliği),
+    hepatik ensefalopati (globus pallidus T1 hiperintensitesi),
+    Wernicke ensefalopatisi (mamiller cisim, periakvaduktal gri madde),
+    osmotik demiyelinizasyon sendromu (santral pontin miyelinolizis),
+    adrenolökodistrofi (ALD), metakromatik lökodistrofi, Canavan hastalığı,
+    mitokondriyal ensefalopati (MELAS, Leigh sendromu)
+
+**Konjenital & Gelişimsel:**
+  - Chiari malformasyonu (tip I — tonsiller herniasyon ≥5mm, tip II — miyelomeningosel ile),
+    Dandy-Walker malformasyonu (posterior fossa kisti, vermis hipoplazisi),
+    araknoid kist, kolpösefali, lizensefali, polimikrogiri, şizensefali,
+    heterotopi (periventrüküler nodüler, bant), korpus kallozum agenezisi/disgenezisi,
+    holoprozensefali, septo-optik displazi
+
+**Diğer:**
+  - Normal basınçlı hidrosefali (NPH — Hakim triadı), PRES (posterior reversible
+    ensefalopati sendromu), intrakranial hipotansiyon (pakimeningeal tutulum,
+    beyin sarkması), radyasyon nekrozu vs tümör rekürrensi, lökoareozis
+    (yaşa bağlı beyaz cevher değişiklikleri — Fazekas skorlaması)
 
 ---
 
@@ -139,7 +288,46 @@ Yardımcı özellikler: T2 hafif hiperintensite, mosaic mimari, nodül-içinde-n
 **Böbrek kisti (Bosniak v2019):**
 I → II → IIF → III → IV (cerrahi risk artar)
 
-**Beyin kitlesi için:** Uygun uluslararası sınıflandırma veya WHO grade belirt.
+**Böbrek solid lezyon:** Renal hücreli karsinom alt tiplerine göre görüntüleme özellikleri.
+Berrak hücreli: hiperintens T2, belirgin kontrast tutulumu, mikroskopik yağ olabilir.
+Papiller: hipointens T2, homojen hipoeenhansman, DWI kısıtlanması.
+Kromofob: homojen kontrast tutulumu, segmental tutulum paterni.
+
+**Pankreas kistik lezyonları:**
+- IPMN: Ana kanal (Wirsung >5mm, ana kanal tipi vs dal tipi, mural nodül?)
+- MCN: Kadın, gövde/kuyruk, periferik kalsifikasyon, ovaryan stroma
+- Seröz kistadenoma: Mikrokistik petek görünümü, santral skar/kalsifikasyon
+- SPN: Genç kadın, kistik-solid, kapsül, kanama
+
+**Adrenal lezyonlar:**
+- Adenom: Kimyasal shift'te sinyal kaybı (in/out-of-phase), ADC ≥1.0-1.2
+- Feokromositoma: "Ampul gibi parlayan" T2 hiperintensitesi, belirgin kontrastlanma
+- Metastaz: Bilateral, düzensiz sınır, kimyasal shift'te sinyal kaybı yok
+- Myelolipom: Makroskopik yağ (T1 hiperintens, yağ baskılamada sinyal kaybı)
+
+**Karaciğer diffüz hastalık:**
+- Hemokromatoz: Karaciğer + pankreas T2* sinyal kaybı (düşük SIR)
+- Wilson hastalığı: Karaciğer + bazal ganglia tutulumu
+- Steatoz/steatohepatit: In/out-of-phase sinyal kaybı, yağ oranı
+- Sarkoidoz: Hepatosplenomegali, multipl küçük nodüller
+
+**Beyin tümörleri için:** WHO 2021 SSS tümör sınıflandırması, grade belirt (1-4).
+- Gliom: IDH mutant vs IDH wild-type, 1p/19q ko-delesyon (oligodendrogliom), MGMT metilasyon
+- Meningiom: WHO grade 1 (benign), grade 2 (atipik), grade 3 (anaplastik)
+- Metastaz: Soliter vs multipl, leptomeningeal yayılım?
+
+**Beyin vasküler olaylar:**
+- İskemik inme: ASPECTS skoru (anterior), pc-ASPECTS (posterior), damar tıkanıklık seviyesi
+- Kanama: ICH skoru, lokalizasyon (derin/lober), olası etiyoloji
+- SVT: Boş delta işareti, venöz infarkt, hemorajik transformasyon
+
+**Demiyelinizan hastalık:**
+- MS: McDonald 2017 kriterleri (DIS — dissemination in space, DIT — dissemination in time)
+- NMOSD: Area postrema, optik sinir, longitudinal transvers miyelit (≥3 segment)
+- MOGAD: Kortikal/jukstakortikal, büyük fluffy lezyonlar
+
+**Fazekas skorlaması (beyaz cevher değişiklikleri):**
+0: Lezyon yok, 1: Punktat odaklar, 2: Başlangıç konfluans, 3: Büyük konfluent alanlar
 
 ---
 
@@ -211,6 +399,22 @@ def _format_brain_lesion(lesion: dict, idx: int) -> str:
         parts.append("    DWI: Kısıtlanma mevcut")
     if lesion.get("enhancement"):
         parts.append(f"    Kontrast tutulumu: {lesion['enhancement']}")
+    # Ek özellikler
+    extra_features = []
+    if lesion.get("perilesional_edema"):
+        extra_features.append("perilesyonel ödem")
+    if lesion.get("mass_effect"):
+        extra_features.append("kitle etkisi")
+    if lesion.get("hemorrhage"):
+        extra_features.append("kanama/hemosiderin")
+    if lesion.get("necrosis"):
+        extra_features.append("nekroz/kistik alan")
+    if lesion.get("calcification"):
+        extra_features.append("kalsifikasyon")
+    if lesion.get("midline_shift"):
+        extra_features.append("ORTA HAT KAYMASI")
+    if extra_features:
+        parts.append(f"    Ek özellikler: {', '.join(extra_features)}")
     if lesion.get("additional"):
         parts.append(f"    Ek: {lesion['additional']}")
     return "\n".join(parts)

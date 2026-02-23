@@ -34,6 +34,12 @@ type BrainLesion = {
   t2_flair_signal: string;
   dwi_restriction: boolean;
   enhancement: string;
+  perilesional_edema: boolean;
+  mass_effect: boolean;
+  hemorrhage: boolean;
+  necrosis: boolean;
+  calcification: boolean;
+  midline_shift: boolean;
   additional: string;
 };
 
@@ -83,6 +89,12 @@ const emptyBrainLesion: BrainLesion = {
   t2_flair_signal: "",
   dwi_restriction: false,
   enhancement: "",
+  perilesional_edema: false,
+  mass_effect: false,
+  hemorrhage: false,
+  necrosis: false,
+  calcification: false,
+  midline_shift: false,
   additional: "",
 };
 
@@ -139,6 +151,98 @@ const LIVER_SEGMENTS = [
   "Segment VI",
   "Segment VII",
   "Segment VIII",
+];
+
+const ABDOMEN_ORGANS = [
+  { group: "Karaciger", options: [
+    ...LIVER_SEGMENTS.map(s => s),
+    "Sag lob (diffuz)",
+    "Sol lob (diffuz)",
+  ]},
+  { group: "Bobrek", options: [
+    "Sag bobrek - ust pol",
+    "Sag bobrek - orta",
+    "Sag bobrek - alt pol",
+    "Sol bobrek - ust pol",
+    "Sol bobrek - orta",
+    "Sol bobrek - alt pol",
+    "Sag bobrek - toplayici sistem/pelvis",
+    "Sol bobrek - toplayici sistem/pelvis",
+  ]},
+  { group: "Pankreas", options: [
+    "Pankreas basi (caput)",
+    "Pankreas boyun (collum)",
+    "Pankreas govde (corpus)",
+    "Pankreas kuyruk (cauda)",
+    "Uncinat proses",
+    "Wirsung kanali",
+  ]},
+  { group: "Dalak", options: [
+    "Dalak - ust pol",
+    "Dalak - alt pol",
+    "Dalak - hilus",
+    "Dalak - diffuz",
+  ]},
+  { group: "Adrenal", options: [
+    "Sag adrenal bez",
+    "Sol adrenal bez",
+  ]},
+  { group: "Safra yollari", options: [
+    "Safra kesesi",
+    "Koledok (CBD)",
+    "Intrahepatik safra yollari",
+  ]},
+  { group: "Diger", options: [
+    "Periton",
+    "Retroperiton",
+    "Mezenter",
+    "Lenf nodu",
+    "Diger (notta belirtin)",
+  ]},
+];
+
+const BRAIN_LOCATIONS = [
+  { group: "Serebral loblar", options: [
+    "Frontal lob",
+    "Temporal lob",
+    "Parietal lob",
+    "Oksipital lob",
+    "Insula",
+  ]},
+  { group: "Derin yapilar", options: [
+    "Bazal ganglionlar",
+    "Talamus",
+    "Hipotalamus",
+    "Internal kapsul",
+    "Korpus kallozum",
+  ]},
+  { group: "Posterior fossa", options: [
+    "Beyin sapi - mezensefalon",
+    "Beyin sapi - pons",
+    "Beyin sapi - bulbus",
+    "Serebellum - hemisfer",
+    "Serebellum - vermis",
+    "Serebellopontin kose (CPK)",
+  ]},
+  { group: "Sellar / Pineal", options: [
+    "Sella / Hipofiz",
+    "Suprasellar sisterna",
+    "Pineal bolge",
+  ]},
+  { group: "Ekstra-aksiyel", options: [
+    "Ekstra-aksiyel (konveksite)",
+    "Falks serebri",
+    "Tentorium",
+    "Intraventrikuler",
+    "Epidural",
+    "Subdural",
+  ]},
+  { group: "Diger", options: [
+    "Orbita",
+    "Kafa kaidesi",
+    "Paranazal sinus",
+    "Diger (notta belirtin)",
+  ]},
 ];
 
 // ── DICOM Yükleme Alanı ───────────────────────────────────────────────────────
@@ -305,12 +409,13 @@ function AbdomenLesionForm({
             className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
           >
             <option value="">Secin...</option>
-            {LIVER_SEGMENTS.map((s) => (
-              <option key={s} value={s}>{s}</option>
+            {ABDOMEN_ORGANS.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </optgroup>
             ))}
-            <option value="Sag lob (diffuz)">Sag lob (diffuz)</option>
-            <option value="Sol lob (diffuz)">Sol lob (diffuz)</option>
-            <option value="Diger">Diger (notta belirtin)</option>
           </select>
         </div>
         <div>
@@ -518,18 +623,13 @@ function BrainLesionForm({
             className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
           >
             <option value="">Secin...</option>
-            <option value="Frontal lob">Frontal lob</option>
-            <option value="Temporal lob">Temporal lob</option>
-            <option value="Parietal lob">Parietal lob</option>
-            <option value="Oksipital lob">Oksipital lob</option>
-            <option value="Bazal ganglionlar">Bazal ganglionlar</option>
-            <option value="Talamus">Talamus</option>
-            <option value="Beyin sapi">Beyin sapi</option>
-            <option value="Serebellum">Serebellum</option>
-            <option value="Korpus kallozum">Korpus kallozum</option>
-            <option value="Intraventrikuler">Intraventrikuler</option>
-            <option value="Ekstra-aksiyel">Ekstra-aksiyel</option>
-            <option value="Diger">Diger (notta belirtin)</option>
+            {BRAIN_LOCATIONS.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
+              </optgroup>
+            ))}
           </select>
         </div>
         <div>
@@ -603,13 +703,79 @@ function BrainLesionForm({
         </div>
       </div>
 
+      {/* Ek ozellikler */}
+      <div className="border-t border-zinc-200 pt-3 space-y-2">
+        <div className="text-xs font-medium text-zinc-500">Ek Ozellikler</div>
+        <div className="flex gap-4 flex-wrap">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.perilesional_edema}
+              onChange={(e) => set("perilesional_edema", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700"
+            />
+            <span className="text-xs text-zinc-600">Perilesyonel odem</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.mass_effect}
+              onChange={(e) => set("mass_effect", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700"
+            />
+            <span className="text-xs text-zinc-600">Kitle etkisi</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.hemorrhage}
+              onChange={(e) => set("hemorrhage", e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-700"
+            />
+            <span className="text-xs text-zinc-600">Kanama / hemosiderin</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.necrosis}
+              onChange={(e) => set("necrosis", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700"
+            />
+            <span className="text-xs text-zinc-600">Nekroz / kistik alan</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.calcification}
+              onChange={(e) => set("calcification", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700"
+            />
+            <span className="text-xs text-zinc-600">Kalsifikasyon</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input
+              type="checkbox"
+              checked={lesion.midline_shift}
+              onChange={(e) => set("midline_shift", e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-700"
+            />
+            <span className="text-xs text-red-700 font-medium">Orta hat kaymasi</span>
+          </label>
+        </div>
+        {lesion.midline_shift && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+            Orta hat kaymasi: Acil norolojik degerlendirme gerekebilir.
+          </p>
+        )}
+      </div>
+
       <div>
-        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular</label>
+        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular (serbest metin)</label>
         <input
           type="text"
           value={lesion.additional}
           onChange={(e) => set("additional", e.target.value)}
-          placeholder="orn: Perilesyonel odem, kitle etkisi, kanama, kalsifikasyon..."
+          placeholder="orn: Dural kuyruk isareti, hemosiderin halkasi, hidrosefali..."
           className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm"
         />
       </div>
