@@ -1,11 +1,12 @@
 import os
+import json
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 
@@ -19,6 +20,8 @@ from core.auth import (
     require_role,
     verify_password,
 )
+from core.agent.dicom_utils import extract_images_from_dicom
+from core.agent.radiologist import stream_radiologist_analysis
 from store.store import save_case, get_case, list_cases
 from store.user_store import ensure_default_admin, get_user
 from store.patient_store import create_patient, get_patient, list_patients, get_patient_cases
@@ -226,3 +229,52 @@ def get_patient_endpoint(
         raise HTTPException(status_code=404, detail="Patient not found")
     cases = get_patient_cases(patient_id)
     return {**p, "cases": cases}
+
+
+# ---------------------------------------------------------------------------
+# Radyolog Ajan (SSE streaming)
+# ---------------------------------------------------------------------------
+
+@app.post("/agent/analyze", tags=["agent"])
+async def agent_analyze(
+    dicoms: list[UploadFile] = File(default=[]),
+    clinical_json: str = Form(...),
+    user: UserInToken = Depends(require_role("admin", "radiologist")),
+):
+    """
+    Radyolog ajanı: DICOM görüntüleri + klinik verilerle MRI analizi yapar.
+    Yanıt Server-Sent Events (SSE) stream olarak gelir.
+    """
+    try:
+        clinical_data = json.loads(clinical_json)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="clinical_json geçerli JSON değil")
+
+    # DICOM dosyalarını işle
+    images: list[dict] = []
+    for upload in dicoms:
+        if not upload.filename:
+            continue
+        file_bytes = await upload.read()
+        extracted = extract_images_from_dicom(file_bytes, max_slices=3)
+        images.extend(extracted)
+
+    # Maksimum 20 görüntü gönder (token limiti)
+    images = images[:20]
+
+    async def event_stream():
+        async for chunk in stream_radiologist_analysis(clinical_data, images):
+            # Her chunk'ı SSE formatında gönder
+            payload = json.dumps({"text": chunk, "done": False}, ensure_ascii=False)
+            yield f"data: {payload}\n\n"
+        yield f"data: {json.dumps({'text': '', 'done': True})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )

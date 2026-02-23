@@ -7,6 +7,12 @@ python-multipart
 sqlalchemy
 python-dotenv
 
+# Radyolog Ajan
+anthropic
+pydicom
+Pillow
+numpy
+
 # Test
 pytest
 httpx

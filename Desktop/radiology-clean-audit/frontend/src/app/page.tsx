@@ -152,8 +152,11 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
           <div className="text-sm text-zinc-500">Vaka listesi</div>
         </div>
         <div className="flex gap-2">
+          <Link href="/agent">
+            <Button>Radyolog Ajan</Button>
+          </Link>
           <Link href="/new">
-            <Button>+ Yeni Vaka</Button>
+            <Button variant="secondary">+ Yeni Vaka</Button>
           </Link>
           <Link href="/patients">
             <Button variant="secondary">Hastalar</Button>
