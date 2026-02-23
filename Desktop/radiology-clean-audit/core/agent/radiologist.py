@@ -644,6 +644,64 @@ Timoma, Teratom/germ hücreli, Tiroid (retrosternal), T-hücreli lenfoma
 - Görüntü kalitesi değerlendirmeyi engelliyorsa bunu açıkça raporla.
 - Yapılandırılmış metin bulguları verildiğinde, bunları görüntülerden elde edilen
   gözlemler gibi değerlendir ve aynı sistematik süreçle analiz et.
+
+---
+
+## 8. GÜVEN SKORU VE AÇIKLANABILIRLIK
+
+Raporun EN SONUNDA, aşağıdaki JSON bloğunu **mutlaka** ekle. Bu blok güven skorunu
+ve açıklanabilirlik verilerini içerir. JSON bloğu ```confidence ile başlayıp ``` ile bitmeli.
+
+```confidence
+{
+  "overall_confidence": 85,
+  "diagnosis_confidence": {
+    "primary": {"diagnosis": "HCC", "confidence": 90, "reasoning": "Kısa gerekçe"},
+    "alternatives": [
+      {"diagnosis": "iCCA", "confidence": 15, "reasoning": "Kısa gerekçe"}
+    ]
+  },
+  "data_quality": {
+    "score": 80,
+    "limiting_factors": ["Eksik sekans veya bilgi varsa listele"]
+  },
+  "key_findings": [
+    {"finding": "Bulgu açıklaması", "significance": "critical|significant|incidental", "supports": "Hangi tanıyı destekliyor"}
+  ],
+  "critical_alert": false,
+  "critical_message": ""
+}
+```
+
+- overall_confidence: 0-100 arası genel güven skoru
+- diagnosis_confidence: Her tanı için ayrı güven yüzdesi ve kısa gerekçe
+- data_quality: Veri kalitesi skoru ve kısıtlayıcı faktörler
+- key_findings: Kilit bulguların listesi (significance: critical/significant/incidental)
+- critical_alert: Acil müdahale gerektiren durumlarda true
+- critical_message: Acil durumda kısa mesaj
+
+Güven skorunu belirlerken:
+- Tüm gerekli sekanslar mevcut ve kaliteli → yüksek skor (80-100)
+- Eksik sekans veya sınırlı bilgi → orta skor (50-79)
+- Sadece klinik bilgi, görüntü/bulgu yok → düşük skor (30-49)
+- Çelişkili bulgular → skoru düşür
+"""
+
+# --- Eğitim Modu Ek Prompt ---
+EDUCATION_PROMPT = """
+
+## EĞİTİM MODU AKTİF
+
+Bu analiz eğitim modunda yapılmaktadır. Normal raporunun yanı sıra,
+her bölümde **[📖 EĞİTİM NOTU]** başlığı altında şunları ekle:
+
+1. **Anatomi hatırlatması:** İlgili anatomik yapının kısa tanımı
+2. **Ayırıcı tanı ipuçları:** Bu bulgu paterni hangi tanıları düşündürür ve neden
+3. **Pitfall uyarısı:** Bu bölgede sık yapılan hatalar veya gözden kaçan noktalar
+4. **Referans:** İlgili sınıflandırma veya guideline adı (ör: LI-RADS v2018, Bosniak v2019)
+5. **Anahtar sinyal özellikleri:** T1/T2/DWI'da beklenen sinyal özellikleri
+
+Her eğitim notunu kısa ve öz tut (2-3 cümle). Pratik ve klinik odaklı ol.
 """
 
 # ---------------------------------------------------------------------------
@@ -958,6 +1016,45 @@ def _build_findings_text(clinical_data: dict) -> str:
     return "\n\n".join(sections)
 
 
+def _build_lab_text(lab_results: list[dict]) -> str:
+    """Laboratuvar sonuçlarını klinik metin formatına çevir."""
+    if not lab_results:
+        return ""
+    lines = ["LABORATUVAR SONUÇLARI:"]
+    for lr in lab_results:
+        abnormal_marker = ""
+        if lr.get("is_abnormal") == "high":
+            abnormal_marker = " ↑ (YÜKSEK)"
+        elif lr.get("is_abnormal") == "low":
+            abnormal_marker = " ↓ (DÜŞÜK)"
+        unit = lr.get("unit", "")
+        ref = f" (Ref: {lr['reference_range']})" if lr.get("reference_range") else ""
+        lines.append(
+            f"  • {lr['test_name']}: {lr['value']} {unit}{abnormal_marker}{ref}"
+            f"  [{lr.get('test_date', '')}]"
+        )
+    return "\n".join(lines)
+
+
+def _build_prior_text(prior_cases: list[dict]) -> str:
+    """Önceki vakaları karşılaştırma metni olarak formatla."""
+    if not prior_cases:
+        return ""
+    lines = ["ÖNCEKİ GÖRÜNTÜLEME KARŞILAŞTIRMASI:"]
+    for pc in prior_cases:
+        content = pc.get("content") or {}
+        lirads = content.get("lirads") or {}
+        dsl = content.get("dsl") or {}
+        date = pc.get("generated_at", "?")
+        cat = lirads.get("category", "?")
+        size = dsl.get("lesion_size_mm", "?")
+        lines.append(f"  • {date}: {cat} — Lezyon boyutu: {size} mm")
+        if content.get("decision"):
+            lines.append(f"    Karar: {content['decision']}")
+    lines.append("\n  Yukarıdaki önceki bulgularla karşılaştırarak temporal değişim değerlendirmesi yapın.")
+    return "\n".join(lines)
+
+
 def _build_content(clinical_data: dict, images: list[dict]) -> list:
     """Claude için mesaj içeriği oluştur (metin + görüntüler)."""
 
@@ -987,6 +1084,16 @@ def _build_content(clinical_data: dict, images: list[dict]) -> list:
 
     # Yapılandırılmış bulgular varsa ekle
     findings_text = _build_findings_text(clinical_data)
+
+    # Lab sonuçları
+    lab_text = _build_lab_text(clinical_data.get("lab_results", []))
+    if lab_text:
+        clinical_text += f"\n\n{lab_text}"
+
+    # Prior karşılaştırma
+    prior_text = _build_prior_text(clinical_data.get("prior_cases", []))
+    if prior_text:
+        clinical_text += f"\n\n{prior_text}"
 
     if findings_text:
         clinical_text += f"\n\n{findings_text}"
@@ -1041,10 +1148,12 @@ def _build_content(clinical_data: dict, images: list[dict]) -> list:
 async def stream_radiologist_analysis(
     clinical_data: dict,
     images: list[dict],
+    education_mode: bool = False,
 ) -> AsyncGenerator[str, None]:
     """
     Claude'a radyolog kimliğiyle soruyu gönder ve SSE chunk'ları stream et.
     Her yield: ham metin parçası (string).
+    education_mode=True ise eğitim notları da eklenir.
     """
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
@@ -1057,11 +1166,15 @@ async def stream_radiologist_analysis(
 
     content = _build_content(clinical_data, images)
 
+    system = SYSTEM_PROMPT
+    if education_mode:
+        system += EDUCATION_PROMPT
+
     try:
         async with client.messages.stream(
             model=model,
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
+            max_tokens=8192,
+            system=system,
             messages=[{"role": "user", "content": content}],
         ) as stream:
             async for chunk in stream.text_stream:

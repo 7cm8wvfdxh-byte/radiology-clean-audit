@@ -25,6 +25,12 @@ from core.agent.radiologist import stream_radiologist_analysis, stream_followup
 from store.store import save_case, get_case, list_cases, get_case_stats, get_case_versions
 from store.user_store import ensure_default_admin, get_user
 from store.patient_store import create_patient, get_patient, list_patients, get_patient_cases
+from store.lab_store import create_lab_result, get_patient_labs, delete_lab_result
+from store.second_read_store import (
+    create_second_reading, complete_second_reading,
+    list_second_readings, get_case_second_readings,
+)
+from core.critical_findings import detect_critical_findings, get_checklist
 
 
 @asynccontextmanager
@@ -263,16 +269,20 @@ def get_patient_endpoint(
 async def agent_analyze(
     dicoms: list[UploadFile] = File(default=[]),
     clinical_json: str = Form(...),
+    education_mode: str = Form(default="false"),
     user: UserInToken = Depends(require_role("admin", "radiologist")),
 ):
     """
     Radyolog ajanı: DICOM görüntüleri + klinik verilerle MRI analizi yapar.
     Yanıt Server-Sent Events (SSE) stream olarak gelir.
+    education_mode=true ise eğitim notları da eklenir.
     """
     try:
         clinical_data = json.loads(clinical_json)
     except json.JSONDecodeError:
         raise HTTPException(status_code=422, detail="clinical_json geçerli JSON değil")
+
+    is_education = education_mode.lower() in ("true", "1", "yes")
 
     # DICOM dosyalarını işle
     images: list[dict] = []
@@ -287,7 +297,7 @@ async def agent_analyze(
     images = images[:20]
 
     async def event_stream():
-        async for chunk in stream_radiologist_analysis(clinical_data, images):
+        async for chunk in stream_radiologist_analysis(clinical_data, images, education_mode=is_education):
             # Her chunk'ı SSE formatında gönder
             payload = json.dumps({"text": chunk, "done": False}, ensure_ascii=False)
             yield f"data: {payload}\n\n"
@@ -330,6 +340,169 @@ def agent_save(
     )
     save_case(body.case_id, pack, created_by=user.username, patient_id=body.patient_id)
     return pack
+
+
+# ---------------------------------------------------------------------------
+# Lab routes (auth zorunlu)
+# ---------------------------------------------------------------------------
+class LabResultCreate(BaseModel):
+    patient_id: str = Field(..., min_length=1)
+    test_name: str = Field(..., min_length=1)
+    value: str = Field(..., min_length=1)
+    unit: str = Field(None)
+    reference_range: str = Field(None)
+    is_abnormal: str = Field("normal", pattern="^(high|low|normal)$")
+    test_date: str = Field(None)
+
+
+@app.post("/labs", tags=["labs"])
+def create_lab(
+    body: LabResultCreate,
+    user: UserInToken = Depends(require_role("admin", "radiologist")),
+):
+    return create_lab_result(
+        patient_id=body.patient_id,
+        test_name=body.test_name,
+        value=body.value,
+        unit=body.unit,
+        reference_range=body.reference_range,
+        is_abnormal=body.is_abnormal,
+        test_date=body.test_date,
+        created_by=user.username,
+    )
+
+
+@app.get("/labs/{patient_id}", tags=["labs"])
+def get_labs(
+    patient_id: str,
+    user: UserInToken = Depends(get_current_user),
+):
+    return get_patient_labs(patient_id)
+
+
+@app.delete("/labs/{lab_id}", tags=["labs"])
+def delete_lab(
+    lab_id: int,
+    user: UserInToken = Depends(require_role("admin", "radiologist")),
+):
+    ok = delete_lab_result(lab_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Lab result not found")
+    return {"deleted": True}
+
+
+# ---------------------------------------------------------------------------
+# Second Reading routes (auth zorunlu)
+# ---------------------------------------------------------------------------
+class SecondReadingCreate(BaseModel):
+    case_id: str = Field(..., min_length=1)
+    reader_username: str = Field(..., min_length=1)
+    original_category: str = Field(None)
+
+
+class SecondReadingComplete(BaseModel):
+    agreement: str = Field(..., pattern="^(agree|disagree|partial)$")
+    second_category: str = Field(None)
+    comments: str = Field(None)
+
+
+@app.post("/second-readings", tags=["second-reading"])
+def create_second_read(
+    body: SecondReadingCreate,
+    user: UserInToken = Depends(require_role("admin")),
+):
+    try:
+        return create_second_reading(
+            case_id=body.case_id,
+            reader_username=body.reader_username,
+            original_category=body.original_category,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
+@app.post("/second-readings/{reading_id}/complete", tags=["second-reading"])
+def complete_second_read(
+    reading_id: int,
+    body: SecondReadingComplete,
+    user: UserInToken = Depends(require_role("admin", "radiologist")),
+):
+    try:
+        return complete_second_reading(
+            reading_id=reading_id,
+            agreement=body.agreement,
+            second_category=body.second_category,
+            comments=body.comments,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@app.get("/second-readings", tags=["second-reading"])
+def list_second_reads(
+    status: str = Query(None),
+    user: UserInToken = Depends(get_current_user),
+):
+    return list_second_readings(status_filter=status)
+
+
+@app.get("/second-readings/case/{case_id}", tags=["second-reading"])
+def get_case_second_reads(
+    case_id: str,
+    user: UserInToken = Depends(get_current_user),
+):
+    return get_case_second_readings(case_id)
+
+
+# ---------------------------------------------------------------------------
+# Checklist routes
+# ---------------------------------------------------------------------------
+@app.get("/checklist/{region}", tags=["checklist"])
+def get_region_checklist(
+    region: str,
+    user: UserInToken = Depends(get_current_user),
+):
+    return get_checklist(region)
+
+
+# ---------------------------------------------------------------------------
+# Critical Findings
+# ---------------------------------------------------------------------------
+@app.post("/critical-findings", tags=["critical"])
+def check_critical(
+    body: dict,
+    user: UserInToken = Depends(get_current_user),
+):
+    """Klinik verilerden kritik bulguları algıla."""
+    clinical_data = body.get("clinical_data", {})
+    lirads_result = body.get("lirads_result")
+    findings = detect_critical_findings(clinical_data, lirads_result)
+    return {"findings": findings, "has_critical": any(f["level"] == "critical" for f in findings)}
+
+
+# ---------------------------------------------------------------------------
+# Prior Comparison (hastanın önceki vakaları)
+# ---------------------------------------------------------------------------
+@app.get("/patients/{patient_id}/prior-cases", tags=["patients"])
+def get_prior_cases(
+    patient_id: str,
+    user: UserInToken = Depends(get_current_user),
+):
+    """Bir hastanın tüm önceki vakalarını karşılaştırma amaçlı döner."""
+    from store.store import get_case as _get_case
+    case_ids = get_patient_cases(patient_id)
+    results = []
+    for cid in case_ids:
+        pack = _get_case(cid)
+        if pack:
+            results.append({
+                "case_id": cid,
+                "generated_at": pack.get("generated_at"),
+                "version": pack.get("version"),
+                "content": pack.get("content"),
+            })
+    results.sort(key=lambda x: x.get("generated_at", ""), reverse=True)
+    return results
 
 
 class FollowupRequest(BaseModel):

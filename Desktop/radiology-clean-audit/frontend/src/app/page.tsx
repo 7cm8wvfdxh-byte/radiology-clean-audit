@@ -167,6 +167,9 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
           <Link href="/patients">
             <Button variant="secondary">Hastalar</Button>
           </Link>
+          <Link href="/second-reading">
+            <Button variant="secondary">Ikinci Okuma</Button>
+          </Link>
           <Button variant="secondary" onClick={() => { clearToken(); onLogout(); }}>
             Çıkış
           </Button>

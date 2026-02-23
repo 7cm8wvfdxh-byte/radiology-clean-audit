@@ -9,6 +9,42 @@ import { getToken, clearToken } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
+// ── Lab Result Tipi ──────────────────────────────────────────────────────────
+type LabResult = {
+  id?: number;
+  patient_id: string;
+  test_name: string;
+  value: string;
+  unit: string;
+  reference_range: string;
+  is_abnormal: string;
+  test_date: string;
+};
+
+// ── Checklist Tipi ───────────────────────────────────────────────────────────
+type ChecklistItem = { id: string; label: string; category: string };
+
+// ── Confidence Data Tipi ─────────────────────────────────────────────────────
+type ConfidenceData = {
+  overall_confidence: number;
+  diagnosis_confidence?: {
+    primary?: { diagnosis: string; confidence: number; reasoning: string };
+    alternatives?: { diagnosis: string; confidence: number; reasoning: string }[];
+  };
+  data_quality?: { score: number; limiting_factors?: string[] };
+  key_findings?: { finding: string; significance: string; supports: string }[];
+  critical_alert?: boolean;
+  critical_message?: string;
+};
+
+// ── Critical Finding Tipi ────────────────────────────────────────────────────
+type CriticalFinding = {
+  level: string;
+  code: string;
+  message: string;
+  action: string;
+};
+
 // ── Tipler ────────────────────────────────────────────────────────────────────
 
 type Lesion = {
@@ -1487,6 +1523,391 @@ function ReportViewer({ text, loading }: { text: string; loading: boolean }) {
   );
 }
 
+// ── Güven Skoru Gösterici ─────────────────────────────────────────────────────
+function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
+  if (!data) return null;
+  const score = data.overall_confidence ?? 0;
+  const color = score >= 80 ? "text-green-700 bg-green-50 border-green-200" :
+    score >= 50 ? "text-yellow-700 bg-yellow-50 border-yellow-200" :
+    "text-red-700 bg-red-50 border-red-200";
+  const barColor = score >= 80 ? "bg-green-500" : score >= 50 ? "bg-yellow-500" : "bg-red-500";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Guven Skoru & Aciklanabilirlik</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Overall Score */}
+        <div className={`flex items-center gap-4 p-3 rounded-lg border ${color}`}>
+          <div className="text-3xl font-bold">{score}%</div>
+          <div className="flex-1">
+            <div className="text-sm font-medium mb-1">Genel Guven Skoru</div>
+            <div className="w-full bg-zinc-200 rounded-full h-2.5">
+              <div className={`h-2.5 rounded-full ${barColor}`} style={{ width: `${score}%` }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Primary Diagnosis */}
+        {data.diagnosis_confidence?.primary && (
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-zinc-700">Primer Tani</div>
+            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-zinc-800">
+                  {data.diagnosis_confidence.primary.diagnosis}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                  data.diagnosis_confidence.primary.confidence >= 80 ? "bg-green-100 text-green-800" :
+                  data.diagnosis_confidence.primary.confidence >= 50 ? "bg-yellow-100 text-yellow-800" :
+                  "bg-red-100 text-red-800"
+                }`}>
+                  {data.diagnosis_confidence.primary.confidence}%
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500 mt-1">
+                {data.diagnosis_confidence.primary.reasoning}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Alternatives */}
+        {data.diagnosis_confidence?.alternatives && data.diagnosis_confidence.alternatives.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-sm font-semibold text-zinc-700">Alternatif Tanilar</div>
+            {data.diagnosis_confidence.alternatives.map((alt, i) => (
+              <div key={i} className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded px-3 py-2">
+                <div>
+                  <span className="text-sm text-zinc-700">{alt.diagnosis}</span>
+                  <span className="text-xs text-zinc-400 ml-2">{alt.reasoning}</span>
+                </div>
+                <span className="text-xs font-bold text-zinc-500">{alt.confidence}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Data Quality */}
+        {data.data_quality && (
+          <div className="space-y-1">
+            <div className="text-sm font-semibold text-zinc-700">Veri Kalitesi: {data.data_quality.score}%</div>
+            {data.data_quality.limiting_factors && data.data_quality.limiting_factors.length > 0 && (
+              <ul className="text-xs text-zinc-500 list-disc ml-4">
+                {data.data_quality.limiting_factors.map((f, i) => (
+                  <li key={i}>{f}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {/* Key Findings */}
+        {data.key_findings && data.key_findings.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-sm font-semibold text-zinc-700">Kilit Bulgular</div>
+            {data.key_findings.map((kf, i) => (
+              <div key={i} className={`text-xs px-2 py-1 rounded border ${
+                kf.significance === "critical" ? "bg-red-50 border-red-200 text-red-700" :
+                kf.significance === "significant" ? "bg-amber-50 border-amber-200 text-amber-700" :
+                "bg-zinc-50 border-zinc-200 text-zinc-600"
+              }`}>
+                <strong>{kf.finding}</strong>
+                <span className="text-zinc-400 ml-1">— {kf.supports}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Kritik Bulgu Alarm Banner ────────────────────────────────────────────────
+function CriticalAlertBanner({ findings }: { findings: CriticalFinding[] }) {
+  if (!findings || findings.length === 0) return null;
+  const hasCritical = findings.some(f => f.level === "critical");
+  return (
+    <div className={`rounded-lg border-2 p-4 space-y-3 ${
+      hasCritical ? "bg-red-50 border-red-400" : "bg-amber-50 border-amber-400"
+    }`}>
+      <div className="flex items-center gap-2">
+        <span className={`text-lg font-bold ${hasCritical ? "text-red-700" : "text-amber-700"}`}>
+          {hasCritical ? "KRITIK BULGU ALARMI" : "ONEMLI BULGULAR"}
+        </span>
+      </div>
+      {findings.map((f, i) => (
+        <div key={i} className={`rounded-md p-3 ${
+          f.level === "critical" ? "bg-red-100 border border-red-300" :
+          f.level === "urgent" ? "bg-orange-100 border border-orange-300" :
+          "bg-yellow-100 border border-yellow-300"
+        }`}>
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${
+              f.level === "critical" ? "bg-red-600 text-white" :
+              f.level === "urgent" ? "bg-orange-600 text-white" :
+              "bg-yellow-600 text-white"
+            }`}>{f.level}</span>
+            <span className="text-sm font-semibold text-zinc-800">{f.message}</span>
+          </div>
+          <p className="text-xs text-zinc-600 ml-1">{f.action}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Sistematik Tarama Checklist ──────────────────────────────────────────────
+function ChecklistPanel({
+  items,
+  title,
+  checked,
+  onToggle,
+}: {
+  items: ChecklistItem[];
+  title: string;
+  checked: Record<string, boolean>;
+  onToggle: (id: string) => void;
+}) {
+  const total = items.length;
+  const done = Object.values(checked).filter(Boolean).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  const categories = [...new Set(items.map(it => it.category))];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          <span>{title}</span>
+          <span className={`text-sm font-normal px-2 py-0.5 rounded-full ${
+            pct === 100 ? "bg-green-100 text-green-700" :
+            pct >= 50 ? "bg-yellow-100 text-yellow-700" :
+            "bg-zinc-100 text-zinc-600"
+          }`}>
+            {done}/{total} ({pct}%)
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="w-full bg-zinc-200 rounded-full h-2">
+          <div
+            className={`h-2 rounded-full transition-all ${pct === 100 ? "bg-green-500" : "bg-zinc-600"}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        {categories.map(cat => (
+          <div key={cat}>
+            <div className="text-xs font-semibold text-zinc-500 mb-1">{cat}</div>
+            {items.filter(it => it.category === cat).map(it => (
+              <label key={it.id} className="flex items-center gap-2 cursor-pointer py-0.5">
+                <input
+                  type="checkbox"
+                  checked={!!checked[it.id]}
+                  onChange={() => onToggle(it.id)}
+                  className="h-3.5 w-3.5 accent-green-600 rounded"
+                />
+                <span className={`text-xs ${checked[it.id] ? "text-zinc-400 line-through" : "text-zinc-700"}`}>
+                  {it.label}
+                </span>
+              </label>
+            ))}
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Lab Sonuçları Paneli ─────────────────────────────────────────────────────
+function LabPanel({
+  labs,
+  onAdd,
+  onRemove,
+}: {
+  labs: LabResult[];
+  onAdd: (lab: LabResult) => void;
+  onRemove: (idx: number) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [newLab, setNewLab] = useState<LabResult>({
+    patient_id: "", test_name: "", value: "", unit: "",
+    reference_range: "", is_abnormal: "normal", test_date: "",
+  });
+
+  const COMMON_TESTS = [
+    { name: "AFP", unit: "ng/mL", ref: "0-10" },
+    { name: "ALT (SGPT)", unit: "U/L", ref: "7-56" },
+    { name: "AST (SGOT)", unit: "U/L", ref: "10-40" },
+    { name: "GGT", unit: "U/L", ref: "9-48" },
+    { name: "ALP", unit: "U/L", ref: "44-147" },
+    { name: "Total Bilirubin", unit: "mg/dL", ref: "0.1-1.2" },
+    { name: "Direkt Bilirubin", unit: "mg/dL", ref: "0-0.3" },
+    { name: "Albumin", unit: "g/dL", ref: "3.5-5.5" },
+    { name: "INR", unit: "", ref: "0.8-1.1" },
+    { name: "Trombosit", unit: "x10³/µL", ref: "150-400" },
+    { name: "Kreatinin", unit: "mg/dL", ref: "0.7-1.3" },
+    { name: "PSA", unit: "ng/mL", ref: "0-4" },
+    { name: "CA 19-9", unit: "U/mL", ref: "0-37" },
+    { name: "CEA", unit: "ng/mL", ref: "0-5" },
+    { name: "CA-125", unit: "U/mL", ref: "0-35" },
+    { name: "HbA1c", unit: "%", ref: "4-5.6" },
+    { name: "LDH", unit: "U/L", ref: "140-280" },
+  ];
+
+  function selectCommon(name: string) {
+    const tpl = COMMON_TESTS.find(t => t.name === name);
+    if (tpl) {
+      setNewLab(l => ({ ...l, test_name: tpl.name, unit: tpl.unit, reference_range: tpl.ref }));
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-semibold text-zinc-700">Laboratuvar Sonuclari</span>
+        <button type="button" onClick={() => setAdding(!adding)}
+          className="text-xs text-zinc-500 hover:text-zinc-700 underline">
+          {adding ? "Kapat" : "+ Lab Ekle"}
+        </button>
+      </div>
+
+      {adding && (
+        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3 space-y-2">
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Hizli Secim</label>
+            <select onChange={(e) => selectCommon(e.target.value)}
+              className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+              <option value="">Test secin...</option>
+              {COMMON_TESTS.map(t => (
+                <option key={t.name} value={t.name}>{t.name} ({t.ref} {t.unit})</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="block text-xs text-zinc-500 mb-0.5">Test Adi</label>
+              <input type="text" value={newLab.test_name}
+                onChange={(e) => setNewLab(l => ({ ...l, test_name: e.target.value }))}
+                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-0.5">Deger</label>
+              <input type="text" value={newLab.value}
+                onChange={(e) => setNewLab(l => ({ ...l, value: e.target.value }))}
+                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-0.5">Durum</label>
+              <select value={newLab.is_abnormal}
+                onChange={(e) => setNewLab(l => ({ ...l, is_abnormal: e.target.value }))}
+                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm">
+                <option value="normal">Normal</option>
+                <option value="high">Yuksek</option>
+                <option value="low">Dusuk</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div>
+              <label className="block text-xs text-zinc-500 mb-0.5">Birim</label>
+              <input type="text" value={newLab.unit}
+                onChange={(e) => setNewLab(l => ({ ...l, unit: e.target.value }))}
+                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-0.5">Referans</label>
+              <input type="text" value={newLab.reference_range}
+                onChange={(e) => setNewLab(l => ({ ...l, reference_range: e.target.value }))}
+                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-500 mb-0.5">Tarih</label>
+              <input type="date" value={newLab.test_date}
+                onChange={(e) => setNewLab(l => ({ ...l, test_date: e.target.value }))}
+                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+            </div>
+          </div>
+          <button type="button" onClick={() => {
+            if (newLab.test_name && newLab.value) {
+              onAdd(newLab);
+              setNewLab({ patient_id: "", test_name: "", value: "", unit: "", reference_range: "", is_abnormal: "normal", test_date: "" });
+            }
+          }} className="text-xs bg-zinc-800 text-white px-3 py-1 rounded hover:bg-zinc-700">
+            Ekle
+          </button>
+        </div>
+      )}
+
+      {labs.length > 0 && (
+        <div className="space-y-1">
+          {labs.map((lab, i) => (
+            <div key={i} className={`flex items-center justify-between text-xs px-2 py-1 rounded border ${
+              lab.is_abnormal === "high" ? "bg-red-50 border-red-200" :
+              lab.is_abnormal === "low" ? "bg-blue-50 border-blue-200" :
+              "bg-zinc-50 border-zinc-200"
+            }`}>
+              <span>
+                <strong>{lab.test_name}</strong>: {lab.value} {lab.unit}
+                {lab.is_abnormal === "high" && <span className="text-red-600 ml-1 font-bold">↑</span>}
+                {lab.is_abnormal === "low" && <span className="text-blue-600 ml-1 font-bold">↓</span>}
+                {lab.reference_range && <span className="text-zinc-400 ml-1">(Ref: {lab.reference_range})</span>}
+              </span>
+              <button type="button" onClick={() => onRemove(i)}
+                className="text-zinc-400 hover:text-red-500 ml-2">x</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Prior Vakaları Paneli ────────────────────────────────────────────────────
+function PriorCasesPanel({
+  priorCases,
+  onSelect,
+}: {
+  priorCases: any[];
+  onSelect: (cases: any[]) => void;
+}) {
+  if (!priorCases || priorCases.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <div className="text-sm font-semibold text-zinc-700">Onceki Vakalar ({priorCases.length})</div>
+      <div className="space-y-1">
+        {priorCases.map((pc: any, i: number) => {
+          const lirads = pc.content?.lirads || {};
+          const dsl = pc.content?.dsl || {};
+          return (
+            <div key={i} className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded px-3 py-2 text-xs">
+              <div>
+                <span className="font-medium text-zinc-700">{pc.case_id}</span>
+                <span className="text-zinc-400 ml-2">{pc.generated_at?.split("T")[0]}</span>
+                {lirads.category && (
+                  <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold ${
+                    lirads.category === "LR-5" ? "bg-red-100 text-red-800" :
+                    lirads.category === "LR-4" ? "bg-orange-100 text-orange-800" :
+                    "bg-zinc-100 text-zinc-700"
+                  }`}>{lirads.category}</span>
+                )}
+                {dsl.lesion_size_mm > 0 && (
+                  <span className="text-zinc-400 ml-2">{dsl.lesion_size_mm} mm</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button type="button" onClick={() => onSelect(priorCases)}
+        className="text-xs text-zinc-500 hover:text-zinc-700 underline">
+        Karsilastirma icin AI analizine dahil et
+      </button>
+    </div>
+  );
+}
+
 // ── LI-RADS Skor Badge ───────────────────────────────────────────────────────
 const LIRADS_COLORS: Record<string, string> = {
   "LR-1": "bg-green-100 text-green-800 border-green-300",
@@ -1540,6 +1961,17 @@ export default function AgentPage() {
   const [saving, setSaving] = useState(false);
   const [savedPack, setSavedPack] = useState<any>(null);
 
+  // ── Yeni Özellikler State ──
+  const [educationMode, setEducationMode] = useState(false);
+  const [confidenceData, setConfidenceData] = useState<ConfidenceData | null>(null);
+  const [criticalFindings, setCriticalFindings] = useState<CriticalFinding[]>([]);
+  const [labResults, setLabResults] = useState<LabResult[]>([]);
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
+  const [checklistTitle, setChecklistTitle] = useState("");
+  const [checklistChecked, setChecklistChecked] = useState<Record<string, boolean>>({});
+  const [priorCases, setPriorCases] = useState<any[]>([]);
+  const [priorIncluded, setPriorIncluded] = useState(false);
+
   useEffect(() => {
     if (!getToken()) {
       router.replace("/");
@@ -1547,6 +1979,60 @@ export default function AgentPage() {
       setAuthed(true);
     }
   }, []);
+
+  // Checklist yükle (bölge değiştiğinde)
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    const region = form.region === "both" ? "abdomen" : form.region;
+    fetch(`${API}/checklist/${region}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data) {
+          setChecklistItems(data.items || []);
+          setChecklistTitle(data.title || "Sistematik Tarama");
+          setChecklistChecked({});
+        }
+      })
+      .catch(() => {});
+  }, [form.region]);
+
+  // Prior vakaları yükle (patient ID değiştiğinde)
+  useEffect(() => {
+    const token = getToken();
+    if (!token || !patientId.trim()) { setPriorCases([]); return; }
+    fetch(`${API}/patients/${patientId.trim()}/prior-cases`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setPriorCases(Array.isArray(data) ? data : []))
+      .catch(() => setPriorCases([]));
+  }, [patientId]);
+
+  // Confidence verisi parse et (rapor tamamlandığında)
+  useEffect(() => {
+    if (!report || loading) return;
+    const match = report.match(/```confidence\s*\n([\s\S]*?)\n```/);
+    if (match) {
+      try {
+        const parsed = JSON.parse(match[1]);
+        setConfidenceData(parsed);
+        // Critical alert from AI response
+        if (parsed.critical_alert) {
+          setCriticalFindings(prev => {
+            const aiAlert: CriticalFinding = {
+              level: "critical", code: "AI_ALERT",
+              message: parsed.critical_message || "AI kritik bulgu tespit etti",
+              action: "Klinik degerlendirme yapilmalidir.",
+            };
+            return prev.some(f => f.code === "AI_ALERT") ? prev : [...prev, aiAlert];
+          });
+        }
+      } catch {}
+    }
+  }, [report, loading]);
 
   function set<K extends keyof ClinicalForm>(key: K, val: ClinicalForm[K]) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -1626,8 +2112,16 @@ export default function AgentPage() {
     const token = getToken();
     if (!token) { clearToken(); router.replace("/"); return; }
 
+    // Lab ve prior bilgilerini clinical_data'ya ekle
+    const enrichedForm = {
+      ...form,
+      lab_results: labResults,
+      prior_cases: priorIncluded ? priorCases : [],
+    };
+
     const body = new FormData();
-    body.append("clinical_json", JSON.stringify(form));
+    body.append("clinical_json", JSON.stringify(enrichedForm));
+    body.append("education_mode", educationMode ? "true" : "false");
     for (const f of dicomFiles) {
       body.append("dicoms", f, f.name);
     }
@@ -1825,12 +2319,27 @@ export default function AgentPage() {
             MRI vakasini yapilandirilmis radyolog akil yurutmesiyle analiz eder
           </p>
         </div>
-        {report && (
-          <Button variant="secondary" onClick={copyReport}>
-            Raporu Kopyala
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {/* Egitim Modu Toggle */}
+          <label className="flex items-center gap-2 cursor-pointer bg-zinc-100 border border-zinc-200 rounded-lg px-3 py-2">
+            <input
+              type="checkbox"
+              checked={educationMode}
+              onChange={(e) => setEducationMode(e.target.checked)}
+              className="h-4 w-4 accent-indigo-600 rounded"
+            />
+            <span className="text-sm font-medium text-zinc-700">Egitim Modu</span>
+          </label>
+          {report && (
+            <Button variant="secondary" onClick={copyReport}>
+              Raporu Kopyala
+            </Button>
+          )}
+        </div>
       </div>
+
+      {/* Kritik Bulgu Alarm Banner - en üstte */}
+      <CriticalAlertBanner findings={criticalFindings} />
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -1979,6 +2488,28 @@ export default function AgentPage() {
                 className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
               />
             </div>
+
+            {/* Lab Sonuçları */}
+            <div className="border-t border-zinc-200 pt-4">
+              <LabPanel
+                labs={labResults}
+                onAdd={(lab) => setLabResults(prev => [...prev, lab])}
+                onRemove={(idx) => setLabResults(prev => prev.filter((_, i) => i !== idx))}
+              />
+            </div>
+
+            {/* Prior Karşılaştırma */}
+            {priorCases.length > 0 && (
+              <div className="border-t border-zinc-200 pt-4">
+                <PriorCasesPanel
+                  priorCases={priorCases}
+                  onSelect={() => setPriorIncluded(true)}
+                />
+                {priorIncluded && (
+                  <p className="text-xs text-green-600 mt-1">Onceki vakalar AI analizine dahil edildi.</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -2342,6 +2873,21 @@ export default function AgentPage() {
 
       {/* Streaming rapor */}
       <ReportViewer text={report} loading={loading} />
+
+      {/* Güven Skoru & Açıklanabilirlik (rapor tamamlandığında) */}
+      {!loading && confidenceData && (
+        <ConfidencePanel data={confidenceData} />
+      )}
+
+      {/* Sistematik Tarama Checklist */}
+      {checklistItems.length > 0 && (
+        <ChecklistPanel
+          items={checklistItems}
+          title={checklistTitle}
+          checked={checklistChecked}
+          onToggle={(id) => setChecklistChecked(prev => ({ ...prev, [id]: !prev[id] }))}
+        />
+      )}
 
       {/* Takip sorulari */}
       {report && !loading && (
