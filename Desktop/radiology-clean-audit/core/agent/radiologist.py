@@ -225,6 +225,11 @@ def _build_findings_text(clinical_data: dict) -> str:
     if sequences:
         sections.append(f"MEVCUT MRI SEKANSLARI: {', '.join(sequences)}")
 
+    # Siroz bilgisi
+    cirrhosis = clinical_data.get("cirrhosis", False)
+    if cirrhosis:
+        sections.append("KRONİK KARACİĞER HASTALIGI: Siroz mevcut (LI-RADS risk popülasyonu)")
+
     region = clinical_data.get("region", "abdomen")
     show_abdomen = region in ("abdomen", "both")
     show_brain = region in ("brain", "both")

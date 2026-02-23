@@ -1,4 +1,5 @@
 import os, json, hmac, hashlib, datetime
+from typing import Optional
 
 AUDIT_SECRET = os.getenv("AUDIT_SECRET", "CHANGE_ME_SECRET")
 
@@ -238,3 +239,147 @@ def verify_pack_full(pack: dict) -> dict:
         "reasons": reasons,
         "hash_mismatches": mismatches,
     }
+
+
+# -------- FORM → DSL BRIDGE --------
+def extract_dsl_from_findings(clinical_data: dict) -> dict:
+    """
+    Ajan formundaki yapılandırılmış lezyon verisini LI-RADS DSL formatına çevirir.
+
+    Birden fazla lezyon varsa, en yüksek risk taşıyan lezyon seçilir
+    (en büyük boyut + en çok major kriter).
+    """
+    lesions = clinical_data.get("lesions", [])
+    cirrhosis = bool(clinical_data.get("cirrhosis", False))
+
+    if not lesions:
+        return {
+            "arterial_phase": {"hyperenhancement": False},
+            "portal_phase": {"washout": False},
+            "delayed_phase": {"capsule": False},
+            "lesion_size_mm": 0,
+            "cirrhosis": cirrhosis,
+        }
+
+    # Her lezyon için DSL üret, en yüksek risk skoru olanı seç
+    best_dsl = None
+    best_score = -1
+
+    for les in lesions:
+        arterial_text = (les.get("arterial_enhancement") or "").lower()
+        # "rim enhansman" → LR-M yönünde, APHE sayılmaz
+        # "hiperenhansman (non-rim APHE)" → gerçek APHE
+        is_rim_only = arterial_text.startswith("rim ")
+        aphe = ("aphe" in arterial_text or "hiperenhansman" in arterial_text) and not is_rim_only
+
+        washout = bool(les.get("washout", False))
+        capsule = bool(les.get("capsule", False))
+
+        size_str = str(les.get("size_mm", "0")).strip()
+        size = int(size_str) if size_str.isdigit() else 0
+
+        dsl = {
+            "arterial_phase": {"hyperenhancement": aphe},
+            "portal_phase": {"washout": washout},
+            "delayed_phase": {"capsule": capsule},
+            "lesion_size_mm": size,
+            "cirrhosis": cirrhosis,
+        }
+
+        # Ancillary features from DWI
+        ancillary = {}
+        if les.get("dwi_restriction"):
+            ancillary["restricted_diffusion"] = True
+        if les.get("additional"):
+            add_lower = les["additional"].lower()
+            if "mozaik" in add_lower or "mosaic" in add_lower:
+                ancillary["mosaic_architecture"] = True
+            if "nodül-içinde-nodül" in add_lower or "nodul-icinde-nodul" in add_lower:
+                ancillary["nodule_in_nodule"] = True
+        if ancillary:
+            dsl["ancillary_features"] = ancillary
+
+        # Risk skoru: major kriterler + boyut
+        score = sum([aphe, washout, capsule]) * 10 + size
+        if score > best_score:
+            best_score = score
+            best_dsl = dsl
+
+    return best_dsl or {
+        "arterial_phase": {"hyperenhancement": False},
+        "portal_phase": {"washout": False},
+        "delayed_phase": {"capsule": False},
+        "lesion_size_mm": 0,
+        "cirrhosis": cirrhosis,
+    }
+
+
+def build_agent_pack(
+    case_id: str,
+    clinical_data: dict,
+    agent_report: str,
+    verify_base_url: str,
+    previous_pack: Optional[dict] = None,
+) -> dict:
+    """
+    Ajan raporunu + otomatik LI-RADS skorunu birlikte içeren audit pack oluşturur.
+    """
+    dsl = extract_dsl_from_findings(clinical_data)
+    lirads_result = run_lirads_decision(dsl)
+
+    generated_at = _now_iso()
+    decision = lirads_result["label"]
+
+    content = {
+        "dsl": dsl,
+        "decision": decision,
+        "lirads": lirads_result,
+        "agent_report": agent_report,
+        "clinical_data": {
+            "region": clinical_data.get("region"),
+            "age": clinical_data.get("age"),
+            "gender": clinical_data.get("gender"),
+            "indication": clinical_data.get("indication"),
+            "risk_factors": clinical_data.get("risk_factors"),
+        },
+    }
+
+    hashes = {
+        "dsl_sha256": _sha256_hex(_canon(content["dsl"])),
+        "decision_sha256": _sha256_hex(_canon({"decision": content["decision"]})),
+    }
+
+    version = 1
+    previous_hash = None
+    if previous_pack:
+        version = previous_pack.get("version", 1) + 1
+        prev_canonical = {k: v for k, v in previous_pack.items() if k != "verify_url"}
+        previous_hash = _sha256_hex(_canon(prev_canonical))
+
+    sign_payload = {
+        "schema": "radiology-clean.audit-pack.v2",
+        "case_id": case_id,
+        "generated_at": generated_at,
+        "version": version,
+        "hashes": hashes,
+    }
+    if previous_hash:
+        sign_payload["previous_hash"] = previous_hash
+
+    signature = _hmac_hex(AUDIT_SECRET, _canon(sign_payload))
+    verify_url = f"{verify_base_url}/verify/{case_id}?sig={signature}"
+
+    pack = {
+        "schema": "radiology-clean.audit-pack.v2",
+        "generated_at": generated_at,
+        "case_id": case_id,
+        "version": version,
+        "content": content,
+        "hashes": hashes,
+        "signature": signature,
+        "verify_url": verify_url,
+    }
+    if previous_hash:
+        pack["previous_hash"] = previous_hash
+
+    return pack

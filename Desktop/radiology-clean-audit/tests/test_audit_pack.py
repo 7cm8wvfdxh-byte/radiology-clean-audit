@@ -5,7 +5,12 @@ import pytest
 
 os.environ.setdefault("AUDIT_SECRET", "test-secret-key")
 
-from core.export.audit_pack import build_pack, verify_pack_full
+from core.export.audit_pack import (
+    build_pack,
+    build_agent_pack,
+    extract_dsl_from_findings,
+    verify_pack_full,
+)
 
 
 SAMPLE_DSL = {
@@ -91,3 +96,159 @@ class TestVerifyPack:
         result = verify_pack_full(tampered)
         assert result["status"] == "TAMPERED"
         assert "schema_mismatch" in result["reasons"]
+
+
+# ── Form → DSL Bridge Testleri ────────────────────────────────────────────────
+
+class TestExtractDslFromFindings:
+    def test_aphe_with_washout_and_capsule(self):
+        clinical = {
+            "cirrhosis": True,
+            "lesions": [{
+                "location": "Segment VI",
+                "size_mm": "22",
+                "arterial_enhancement": "hiperenhansman (non-rim APHE)",
+                "washout": True,
+                "capsule": True,
+            }],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        assert dsl["arterial_phase"]["hyperenhancement"] is True
+        assert dsl["portal_phase"]["washout"] is True
+        assert dsl["delayed_phase"]["capsule"] is True
+        assert dsl["lesion_size_mm"] == 22
+        assert dsl["cirrhosis"] is True
+
+    def test_rim_enhancement_not_aphe(self):
+        clinical = {
+            "cirrhosis": True,
+            "lesions": [{
+                "size_mm": "30",
+                "arterial_enhancement": "rim enhansman",
+                "washout": True,
+            }],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        # rim enhancement ≠ APHE
+        assert dsl["arterial_phase"]["hyperenhancement"] is False
+
+    def test_empty_lesions_returns_defaults(self):
+        clinical = {"cirrhosis": False, "lesions": []}
+        dsl = extract_dsl_from_findings(clinical)
+        assert dsl["lesion_size_mm"] == 0
+        assert dsl["cirrhosis"] is False
+
+    def test_no_lesions_key_returns_defaults(self):
+        clinical = {"cirrhosis": True}
+        dsl = extract_dsl_from_findings(clinical)
+        assert dsl["lesion_size_mm"] == 0
+        assert dsl["cirrhosis"] is True
+
+    def test_multiple_lesions_picks_highest_risk(self):
+        clinical = {
+            "cirrhosis": True,
+            "lesions": [
+                {"size_mm": "8", "arterial_enhancement": "", "washout": False, "capsule": False},
+                {"size_mm": "25", "arterial_enhancement": "hiperenhansman (non-rim APHE)",
+                 "washout": True, "capsule": True},
+            ],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        # Should pick the 25mm lesion with all criteria
+        assert dsl["lesion_size_mm"] == 25
+        assert dsl["arterial_phase"]["hyperenhancement"] is True
+
+    def test_dwi_restriction_as_ancillary(self):
+        clinical = {
+            "cirrhosis": True,
+            "lesions": [{
+                "size_mm": "15",
+                "arterial_enhancement": "hiperenhansman (non-rim APHE)",
+                "washout": False,
+                "capsule": False,
+                "dwi_restriction": True,
+            }],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        assert "ancillary_features" in dsl
+        assert dsl["ancillary_features"]["restricted_diffusion"] is True
+
+    def test_non_numeric_size_defaults_to_zero(self):
+        clinical = {
+            "cirrhosis": False,
+            "lesions": [{"size_mm": "abc", "arterial_enhancement": ""}],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        assert dsl["lesion_size_mm"] == 0
+
+
+class TestExtractDslLiradsIntegration:
+    """Bridge fonksiyonunun LI-RADS motoru ile entegrasyon testleri."""
+
+    def test_lr5_from_form_data(self):
+        from core.export.audit_pack import run_lirads_decision
+        clinical = {
+            "cirrhosis": True,
+            "lesions": [{
+                "size_mm": "22",
+                "arterial_enhancement": "hiperenhansman (non-rim APHE)",
+                "washout": True,
+                "capsule": True,
+            }],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        result = run_lirads_decision(dsl)
+        assert result["category"] == "LR-5"
+
+    def test_lr2_from_benign_form_data(self):
+        from core.export.audit_pack import run_lirads_decision
+        clinical = {
+            "cirrhosis": False,
+            "lesions": [{
+                "size_mm": "12",
+                "arterial_enhancement": "hipoenhansman",
+                "washout": False,
+                "capsule": False,
+            }],
+        }
+        dsl = extract_dsl_from_findings(clinical)
+        result = run_lirads_decision(dsl)
+        assert result["category"] == "LR-2"
+
+
+class TestBuildAgentPack:
+    def test_agent_pack_contains_report(self):
+        clinical = {
+            "region": "abdomen",
+            "cirrhosis": True,
+            "lesions": [{"size_mm": "22", "arterial_enhancement": "hiperenhansman (non-rim APHE)",
+                         "washout": True, "capsule": True}],
+            "age": "58", "gender": "Erkek", "indication": "HCC?",
+        }
+        pack = build_agent_pack("AGENT-001", clinical, "Test rapor metni", "http://localhost:8000")
+        assert pack["content"]["agent_report"] == "Test rapor metni"
+        assert pack["content"]["decision"] == "LR-5 (Definite HCC)"
+        assert pack["schema"] == "radiology-clean.audit-pack.v2"
+
+    def test_agent_pack_verifiable(self):
+        clinical = {
+            "cirrhosis": False,
+            "lesions": [{"size_mm": "5", "arterial_enhancement": ""}],
+        }
+        pack = build_agent_pack("AGENT-002", clinical, "Rapor", "http://localhost:8000")
+        result = verify_pack_full(pack)
+        assert result["status"] == "VALID"
+
+    def test_agent_pack_preserves_clinical_data(self):
+        clinical = {
+            "region": "brain",
+            "age": "45",
+            "gender": "Kadin",
+            "indication": "Bas agrisi",
+            "risk_factors": "Yok",
+            "cirrhosis": False,
+            "lesions": [],
+        }
+        pack = build_agent_pack("AGENT-003", clinical, "Beyin raporu", "http://localhost:8000")
+        assert pack["content"]["clinical_data"]["region"] == "brain"
+        assert pack["content"]["clinical_data"]["age"] == "45"

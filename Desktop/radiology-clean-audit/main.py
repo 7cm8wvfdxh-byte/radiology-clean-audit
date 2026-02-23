@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
 
-from core.export.audit_pack import build_pack, verify_pack_full
+from core.export.audit_pack import build_pack, build_agent_pack, verify_pack_full
 from core.export.pdf_export import generate_pdf
 from core.auth import (
     TokenResponse,
@@ -278,3 +278,31 @@ async def agent_analyze(
             "Connection": "keep-alive",
         },
     )
+
+
+class AgentSaveRequest(BaseModel):
+    case_id: str = Field(..., min_length=1, description="Vaka ID (ör: CASE-1001)")
+    clinical_data: dict = Field(..., description="Ajan formundan gelen klinik veri")
+    agent_report: str = Field(..., min_length=1, description="Ajan tarafından üretilen rapor metni")
+    patient_id: str = Field(None, description="Opsiyonel hasta ID'si")
+
+
+@app.post("/agent/save", tags=["agent"])
+def agent_save(
+    body: AgentSaveRequest,
+    user: UserInToken = Depends(require_role("admin", "radiologist")),
+):
+    """
+    Ajan raporunu LI-RADS skoru ile birlikte imzalı audit pack olarak kaydeder.
+    Form verilerinden DSL otomatik çıkarılır ve LI-RADS motoru çalıştırılır.
+    """
+    previous_pack = get_case(body.case_id)
+    pack = build_agent_pack(
+        case_id=body.case_id,
+        clinical_data=body.clinical_data,
+        agent_report=body.agent_report,
+        verify_base_url=VERIFY_BASE_URL,
+        previous_pack=previous_pack,
+    )
+    save_case(body.case_id, pack, created_by=user.username, patient_id=body.patient_id)
+    return pack

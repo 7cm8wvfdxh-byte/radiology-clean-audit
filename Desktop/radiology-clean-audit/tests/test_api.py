@@ -193,3 +193,68 @@ class TestVerify:
     def test_verify_nonexistent_case(self):
         res = client.get(f"/verify/NONEXISTENT-999?sig=abc")
         assert res.status_code == 404
+
+
+class TestAgentSave:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_save_with_lirads_scoring(self):
+        body = {
+            "case_id": "AGENT-SAVE-001",
+            "clinical_data": {
+                "region": "abdomen",
+                "cirrhosis": True,
+                "lesions": [{
+                    "location": "Segment VI",
+                    "size_mm": "22",
+                    "arterial_enhancement": "hiperenhansman (non-rim APHE)",
+                    "washout": True,
+                    "capsule": True,
+                }],
+                "age": "58",
+                "gender": "Erkek",
+                "indication": "HCC?",
+            },
+            "agent_report": "Bu bir test ajan raporudur.",
+        }
+        res = client.post("/agent/save", json=body, headers=self._token())
+        assert res.status_code == 200
+        data = res.json()
+        assert data["case_id"] == "AGENT-SAVE-001"
+        assert data["content"]["decision"] == "LR-5 (Definite HCC)"
+        assert data["content"]["agent_report"] == "Bu bir test ajan raporudur."
+        assert "signature" in data
+
+    def test_save_retrievable_as_case(self):
+        body = {
+            "case_id": "AGENT-SAVE-002",
+            "clinical_data": {"cirrhosis": False, "lesions": []},
+            "agent_report": "Minimal rapor",
+        }
+        client.post("/agent/save", json=body, headers=self._token())
+        res = client.get("/cases/AGENT-SAVE-002", headers=self._token())
+        assert res.status_code == 200
+        assert res.json()["content"]["agent_report"] == "Minimal rapor"
+
+    def test_save_without_auth_denied(self):
+        body = {
+            "case_id": "AGENT-SAVE-003",
+            "clinical_data": {},
+            "agent_report": "test",
+        }
+        res = client.post("/agent/save", json=body)
+        assert res.status_code == 401
+
+    def test_save_missing_case_id(self):
+        body = {
+            "clinical_data": {},
+            "agent_report": "test",
+        }
+        res = client.post("/agent/save", json=body, headers=self._token())
+        assert res.status_code == 422

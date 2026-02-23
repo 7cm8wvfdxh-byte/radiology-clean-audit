@@ -42,6 +42,7 @@ type ClinicalForm = {
   contrast_agent: string;
   risk_factors: string;
   notes: string;
+  cirrhosis: boolean;
   // MRI sequences available
   sequences: string[];
   // Abdomen findings
@@ -86,6 +87,7 @@ const defaultForm: ClinicalForm = {
   contrast_agent: "",
   risk_factors: "",
   notes: "",
+  cirrhosis: false,
   sequences: [],
   liver_parenchyma: "",
   lesions: [{ ...emptyLesion }],
@@ -632,6 +634,25 @@ function ReportViewer({ text, loading }: { text: string; loading: boolean }) {
   );
 }
 
+// ── LI-RADS Skor Badge ───────────────────────────────────────────────────────
+const LIRADS_COLORS: Record<string, string> = {
+  "LR-1": "bg-green-100 text-green-800 border-green-300",
+  "LR-2": "bg-green-50 text-green-700 border-green-200",
+  "LR-3": "bg-yellow-50 text-yellow-800 border-yellow-300",
+  "LR-4": "bg-orange-50 text-orange-800 border-orange-300",
+  "LR-5": "bg-red-50 text-red-800 border-red-300",
+  "LR-M": "bg-purple-50 text-purple-800 border-purple-300",
+};
+
+function LiradsBadge({ category, label }: { category: string; label: string }) {
+  const color = LIRADS_COLORS[category] || "bg-zinc-100 text-zinc-800 border-zinc-300";
+  return (
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border ${color}`}>
+      {label}
+    </span>
+  );
+}
+
 // ── Bolum Baslik Yardimcisi ──────────────────────────────────────────────────
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -652,6 +673,12 @@ export default function AgentPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState("");
+
+  // Save state
+  const [caseId, setCaseId] = useState("");
+  const [patientId, setPatientId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [savedPack, setSavedPack] = useState<any>(null);
 
   useEffect(() => {
     if (!getToken()) {
@@ -772,6 +799,44 @@ export default function AgentPage() {
     try {
       await navigator.clipboard.writeText(report);
     } catch {}
+  }
+
+  async function handleSave() {
+    if (!caseId.trim()) {
+      setError("Kaydetmek icin Vaka ID zorunludur.");
+      return;
+    }
+    const token = getToken();
+    if (!token) { clearToken(); router.replace("/"); return; }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API}/agent/save`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          case_id: caseId.trim(),
+          clinical_data: form,
+          agent_report: report,
+          patient_id: patientId.trim() || null,
+        }),
+      });
+      if (res.status === 401) { clearToken(); router.replace("/"); return; }
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        throw new Error(detail?.detail ?? `HTTP ${res.status}`);
+      }
+      const pack = await res.json();
+      setSavedPack(pack);
+    } catch (err: any) {
+      setError(err?.message ?? "Kaydetme hatasi");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!authed) return null;
@@ -898,7 +963,26 @@ export default function AgentPage() {
               )}
             </div>
 
-            {/* Risk faktorleri */}
+            {/* Siroz + Risk faktorleri */}
+            {showAbdomen && (
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-zinc-700 mb-2">
+                  <input
+                    type="checkbox"
+                    checked={form.cirrhosis}
+                    onChange={(e) => set("cirrhosis", e.target.checked)}
+                    className="h-4 w-4 rounded border-zinc-300 accent-zinc-700"
+                  />
+                  Siroz / Kronik karaciger hastaligi mevcut
+                </label>
+                {form.cirrhosis && (
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                    Siroz varliginda LI-RADS skorlamasi aktif olur. Lezyon ozellikleri kritik onem tasir.
+                  </p>
+                )}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Risk Faktorleri
@@ -907,7 +991,7 @@ export default function AgentPage() {
                 type="text"
                 value={form.risk_factors}
                 onChange={(e) => set("risk_factors", e.target.value)}
-                placeholder="Ornek: Siroz (Child-A), HBsAg(+), AFP 42 ng/mL, DM, hipertansiyon"
+                placeholder="Ornek: HBsAg(+), AFP 42 ng/mL, DM, hipertansiyon, alkol"
                 className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
               />
             </div>
@@ -1113,6 +1197,102 @@ export default function AgentPage() {
 
       {/* Streaming rapor */}
       <ReportViewer text={report} loading={loading} />
+
+      {/* Kaydetme + LI-RADS paneli */}
+      {report && !loading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Raporu Kaydet</span>
+              {savedPack?.content?.lirads && (
+                <LiradsBadge
+                  category={savedPack.content.lirads.category}
+                  label={savedPack.content.lirads.label}
+                />
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {savedPack ? (
+              <div className="space-y-3">
+                <div className="bg-green-50 border border-green-200 rounded-md px-3 py-2 text-sm text-green-800">
+                  Vaka <strong>{savedPack.case_id}</strong> basariyla kaydedildi.
+                </div>
+
+                {savedPack.content?.lirads && showAbdomen && (
+                  <div className="bg-zinc-50 border border-zinc-200 rounded-md p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-zinc-700">LI-RADS Skoru:</span>
+                      <LiradsBadge
+                        category={savedPack.content.lirads.category}
+                        label={savedPack.content.lirads.label}
+                      />
+                    </div>
+                    {savedPack.content.lirads.applied_criteria?.length > 0 && (
+                      <div className="text-xs text-zinc-500">
+                        Uygulanan kriterler: {savedPack.content.lirads.applied_criteria.join(", ")}
+                      </div>
+                    )}
+                    {savedPack.content.lirads.ancillary_favor_hcc?.length > 0 && (
+                      <div className="text-xs text-zinc-500">
+                        HCC lehine yardimci: {savedPack.content.lirads.ancillary_favor_hcc.join(", ")}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2 text-xs">
+                  <span className="text-zinc-400">Imza: {savedPack.signature?.slice(0, 16)}...</span>
+                  <span className="text-zinc-400">|</span>
+                  <Link
+                    href={`/cases/${savedPack.case_id}`}
+                    className="text-zinc-600 hover:underline"
+                  >
+                    Vakaya git &rarr;
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-1">
+                      Vaka ID <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={caseId}
+                      onChange={(e) => setCaseId(e.target.value)}
+                      placeholder="orn: CASE-1001"
+                      className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-zinc-500 mb-1">
+                      Hasta ID (opsiyonel)
+                    </label>
+                    <input
+                      type="text"
+                      value={patientId}
+                      onChange={(e) => setPatientId(e.target.value)}
+                      placeholder="orn: P-00001"
+                      className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving ? "Kaydediliyor..." : "Kaydet & LI-RADS Skorla"}
+                  </Button>
+                  <span className="text-xs text-zinc-400">
+                    Ajan raporu + LI-RADS skoru + imzali audit pack olusturulur
+                  </span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
