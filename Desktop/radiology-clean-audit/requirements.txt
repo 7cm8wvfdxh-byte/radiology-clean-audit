@@ -5,6 +5,7 @@ reportlab
 qrcode
 python-multipart
 sqlalchemy
+python-dotenv
 
 # Test
 pytest
