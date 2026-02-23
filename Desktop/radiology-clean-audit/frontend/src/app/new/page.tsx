@@ -36,7 +36,7 @@ export default function NewCase() {
 
   useEffect(() => {
     if (!getToken()) {
-      router.replace("/login");
+      router.replace("/");
     } else {
       setAuthed(true);
     }
@@ -82,7 +82,7 @@ export default function NewCase() {
           body: JSON.stringify(body),
         }
       );
-      if (res.status === 401) { clearToken(); router.replace("/login"); return; }
+      if (res.status === 401) { clearToken(); router.replace("/"); return; }
       if (!res.ok) {
         const detail = await res.json().catch(() => ({}));
         throw new Error(detail?.detail ?? `HTTP ${res.status}`);

@@ -13,10 +13,10 @@ export default function AppHeader() {
   const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    if (pathname === "/login") return;
+    if (pathname === "/login" || pathname === "/") return;
     const token = getToken();
     if (!token) {
-      router.replace("/login");
+      router.replace("/");
       return;
     }
     fetch(`${API}/auth/me`, {
@@ -26,14 +26,14 @@ export default function AppHeader() {
       .then((d) => {
         if (!d) {
           clearToken();
-          router.replace("/login");
+          router.replace("/");
         } else {
           setUsername(d.username);
         }
       })
       .catch(() => {
         clearToken();
-        router.replace("/login");
+        router.replace("/");
       });
   }, [pathname]);
 
@@ -42,7 +42,7 @@ export default function AppHeader() {
     router.replace("/login");
   }
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname === "/") return null;
 
   return (
     <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur">
