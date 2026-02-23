@@ -43,8 +43,50 @@ type BrainLesion = {
   additional: string;
 };
 
+type SpineLesion = {
+  location: string;
+  size_mm: string;
+  t1_signal: string;
+  t2_signal: string;
+  dwi_restriction: boolean;
+  enhancement: string;
+  cord_compression: boolean;
+  nerve_root_compression: boolean;
+  canal_stenosis: boolean;
+  vertebral_fracture: boolean;
+  additional: string;
+};
+
+type ThoraxLesion = {
+  location: string;
+  size_mm: string;
+  morphology: string;
+  density: string;
+  enhancement: string;
+  cavitation: boolean;
+  calcification: boolean;
+  spiculation: boolean;
+  pleural_contact: boolean;
+  lymphadenopathy: boolean;
+  additional: string;
+};
+
+type PelvisLesion = {
+  location: string;
+  size_mm: string;
+  t1_signal: string;
+  t2_signal: string;
+  dwi_restriction: boolean;
+  enhancement: string;
+  invasion: string;
+  lymph_nodes: boolean;
+  additional: string;
+};
+
+type RegionType = "abdomen" | "brain" | "both" | "spine" | "thorax" | "pelvis";
+
 type ClinicalForm = {
-  region: "abdomen" | "brain" | "both";
+  region: RegionType;
   age: string;
   gender: string;
   indication: string;
@@ -64,6 +106,18 @@ type ClinicalForm = {
   brain_general: string;
   brain_lesions: BrainLesion[];
   brain_other: string;
+  // Spine findings
+  spine_general: string;
+  spine_lesions: SpineLesion[];
+  spine_other: string;
+  // Thorax findings
+  thorax_general: string;
+  thorax_lesions: ThoraxLesion[];
+  thorax_other: string;
+  // Pelvis findings
+  pelvis_general: string;
+  pelvis_lesions: PelvisLesion[];
+  pelvis_other: string;
 };
 
 const emptyLesion: Lesion = {
@@ -98,6 +152,46 @@ const emptyBrainLesion: BrainLesion = {
   additional: "",
 };
 
+const emptySpineLesion: SpineLesion = {
+  location: "",
+  size_mm: "",
+  t1_signal: "",
+  t2_signal: "",
+  dwi_restriction: false,
+  enhancement: "",
+  cord_compression: false,
+  nerve_root_compression: false,
+  canal_stenosis: false,
+  vertebral_fracture: false,
+  additional: "",
+};
+
+const emptyThoraxLesion: ThoraxLesion = {
+  location: "",
+  size_mm: "",
+  morphology: "",
+  density: "",
+  enhancement: "",
+  cavitation: false,
+  calcification: false,
+  spiculation: false,
+  pleural_contact: false,
+  lymphadenopathy: false,
+  additional: "",
+};
+
+const emptyPelvisLesion: PelvisLesion = {
+  location: "",
+  size_mm: "",
+  t1_signal: "",
+  t2_signal: "",
+  dwi_restriction: false,
+  enhancement: "",
+  invasion: "",
+  lymph_nodes: false,
+  additional: "",
+};
+
 const defaultForm: ClinicalForm = {
   region: "abdomen",
   age: "",
@@ -116,6 +210,15 @@ const defaultForm: ClinicalForm = {
   brain_general: "",
   brain_lesions: [{ ...emptyBrainLesion }],
   brain_other: "",
+  spine_general: "",
+  spine_lesions: [{ ...emptySpineLesion }],
+  spine_other: "",
+  thorax_general: "",
+  thorax_lesions: [{ ...emptyThoraxLesion }],
+  thorax_other: "",
+  pelvis_general: "",
+  pelvis_lesions: [{ ...emptyPelvisLesion }],
+  pelvis_other: "",
 };
 
 const ABDOMEN_SEQUENCES = [
@@ -241,6 +344,153 @@ const BRAIN_LOCATIONS = [
     "Orbita",
     "Kafa kaidesi",
     "Paranazal sinus",
+    "Diger (notta belirtin)",
+  ]},
+];
+
+const SPINE_SEQUENCES = [
+  "T1 SE/TSE (sagittal)",
+  "T2 TSE (sagittal)",
+  "T2 TSE (aksiyel)",
+  "STIR / T2 Yag Baskilamali",
+  "T1 Post-kontrast (sagittal)",
+  "T1 Post-kontrast (aksiyel)",
+  "DWI / ADC",
+  "T2* GRE / SWI",
+  "3D T2 (CISS/FIESTA)",
+];
+
+const THORAX_SEQUENCES = [
+  "BT (kontrastsiz)",
+  "BT (kontrastli)",
+  "BT Anjiyografi (pulmoner)",
+  "BT Anjiyografi (aort)",
+  "HRCT (yuksek cozunurluk)",
+  "T2 HASTE",
+  "DWI / ADC",
+  "T1 Pre-kontrast",
+  "T1 Post-kontrast",
+  "Kardiyak MRI (sine/CINE)",
+];
+
+const PELVIS_SEQUENCES = [
+  "T2 TSE (aksiyel)",
+  "T2 TSE (sagittal)",
+  "T2 TSE (koronal)",
+  "T1 TSE (aksiyel)",
+  "DWI / ADC",
+  "T1 Post-kontrast (dinamik)",
+  "T1 Post-kontrast (gec faz)",
+  "STIR / T2 Yag Baskilamali",
+  "MR Spektroskopi",
+];
+
+const SPINE_LOCATIONS = [
+  { group: "Servikal", options: [
+    "C1 (atlas)", "C2 (aksis)", "C3", "C4", "C5", "C6", "C7",
+    "C2-C3 disk", "C3-C4 disk", "C4-C5 disk", "C5-C6 disk", "C6-C7 disk",
+    "Servikal spinal kord",
+  ]},
+  { group: "Torakal", options: [
+    "T1", "T2", "T3", "T4", "T5", "T6",
+    "T7", "T8", "T9", "T10", "T11", "T12",
+    "Torakal spinal kord",
+  ]},
+  { group: "Lomber", options: [
+    "L1", "L2", "L3", "L4", "L5",
+    "L1-L2 disk", "L2-L3 disk", "L3-L4 disk", "L4-L5 disk", "L5-S1 disk",
+    "Kauda equina",
+  ]},
+  { group: "Sakral / Diger", options: [
+    "Sakrum", "Koksiks",
+    "Sakroiliak eklem",
+    "Epidural alan",
+    "Paravertebral alan",
+    "Kraniovertikal biliske",
+    "Diger (notta belirtin)",
+  ]},
+];
+
+const THORAX_LOCATIONS = [
+  { group: "Akciger", options: [
+    "Sag ust lob",
+    "Sag orta lob",
+    "Sag alt lob",
+    "Sol ust lob",
+    "Lingula",
+    "Sol alt lob",
+    "Bilateral / diffuz",
+  ]},
+  { group: "Mediasten", options: [
+    "Anterior mediasten",
+    "Orta mediasten",
+    "Posterior mediasten",
+    "Hiler (sag)",
+    "Hiler (sol)",
+    "Subkarinal",
+  ]},
+  { group: "Plevra / Diger", options: [
+    "Sag plevra",
+    "Sol plevra",
+    "Perikard",
+    "Gogus duvari",
+    "Trakea / bronş",
+    "Aort / buyuk damar",
+    "Pulmoner arter",
+    "Diger (notta belirtin)",
+  ]},
+];
+
+const PELVIS_LOCATIONS_MALE = [
+  { group: "Prostat", options: [
+    "Prostat - periferik zon (sag)",
+    "Prostat - periferik zon (sol)",
+    "Prostat - transisyonel zon",
+    "Prostat - santral zon",
+    "Prostat - anterior fibromuskuler stroma",
+    "Seminal vezikul (sag)",
+    "Seminal vezikul (sol)",
+  ]},
+  { group: "Mesane / Rektum", options: [
+    "Mesane",
+    "Rektum",
+    "Anal kanal",
+  ]},
+  { group: "Diger", options: [
+    "Pelvik lenf nodu",
+    "Pelvik kemik",
+    "Sakrum",
+    "Femur basi",
+    "Diger (notta belirtin)",
+  ]},
+];
+
+const PELVIS_LOCATIONS_FEMALE = [
+  { group: "Uterus", options: [
+    "Uterus - endometrium",
+    "Uterus - myometrium",
+    "Uterus - junctional zone",
+    "Serviks",
+    "Uterus - fundus",
+    "Uterus - korpus",
+  ]},
+  { group: "Over / Tuba", options: [
+    "Sag over",
+    "Sol over",
+    "Sag tuba",
+    "Sol tuba",
+    "Douglas boslugu",
+  ]},
+  { group: "Mesane / Rektum", options: [
+    "Mesane",
+    "Rektum",
+    "Anal kanal",
+  ]},
+  { group: "Diger", options: [
+    "Pelvik lenf nodu",
+    "Pelvik kemik",
+    "Sakrum",
+    "Femur basi",
     "Diger (notta belirtin)",
   ]},
 ];
@@ -783,6 +1033,381 @@ function BrainLesionForm({
   );
 }
 
+// ── Spinal Lezyon Formu ──────────────────────────────────────────────────────
+function SpineLesionForm({
+  lesion, index, onChange, onRemove, canRemove,
+}: {
+  lesion: SpineLesion; index: number;
+  onChange: (l: SpineLesion) => void; onRemove: () => void; canRemove: boolean;
+}) {
+  function set<K extends keyof SpineLesion>(key: K, val: SpineLesion[K]) {
+    onChange({ ...lesion, [key]: val });
+  }
+  return (
+    <div className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-zinc-50/50">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-zinc-700">Lezyon {index + 1}</span>
+        {canRemove && (
+          <button type="button" onClick={onRemove} className="text-xs text-zinc-400 hover:text-red-500">Kaldir</button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Lokalizasyon</label>
+          <select value={lesion.location} onChange={(e) => set("location", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Secin...</option>
+            {SPINE_LOCATIONS.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (<option key={opt} value={opt}>{opt}</option>))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Boyut (mm)</label>
+          <input type="number" min={0} max={300} value={lesion.size_mm}
+            onChange={(e) => set("size_mm", e.target.value)} placeholder="orn: 12"
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T1 Sinyal</label>
+          <select value={lesion.t1_signal} onChange={(e) => set("t1_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T2 Sinyal</label>
+          <select value={lesion.t2_signal} onChange={(e) => set("t2_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Kontrast Tutulumu</label>
+          <select value={lesion.enhancement} onChange={(e) => set("enhancement", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="homojen tutulum">Homojen tutulum</option>
+            <option value="heterojen tutulum">Heterojen tutulum</option>
+            <option value="rim tutulum">Rim tutulum</option>
+            <option value="tutulum yok">Tutulum yok</option>
+          </select>
+        </div>
+        <div className="flex flex-col justify-end gap-1.5">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.dwi_restriction}
+              onChange={(e) => set("dwi_restriction", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">DWI Kisitlanmasi</span>
+          </label>
+        </div>
+      </div>
+      <div className="border-t border-zinc-200 pt-3 space-y-2">
+        <div className="text-xs font-medium text-zinc-500">Kritik Bulgular</div>
+        <div className="flex gap-4 flex-wrap">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.cord_compression}
+              onChange={(e) => set("cord_compression", e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-700" />
+            <span className="text-xs text-red-700 font-medium">Spinal kord kompresyonu</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.nerve_root_compression}
+              onChange={(e) => set("nerve_root_compression", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">Sinir koku kompresyonu</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.canal_stenosis}
+              onChange={(e) => set("canal_stenosis", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">Kanal stenozu</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.vertebral_fracture}
+              onChange={(e) => set("vertebral_fracture", e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-700" />
+            <span className="text-xs text-red-700 font-medium">Vertebra kirigi</span>
+          </label>
+        </div>
+        {lesion.cord_compression && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+            Spinal kord kompresyonu: Acil norolojik degerlendirme gerekebilir!
+          </p>
+        )}
+      </div>
+      <div>
+        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular</label>
+        <input type="text" value={lesion.additional} onChange={(e) => set("additional", e.target.value)}
+          placeholder="orn: Modic tip I degisiklik, disk sekestrasyon, epidural abse..."
+          className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm" />
+      </div>
+    </div>
+  );
+}
+
+// ── Toraks Lezyon Formu ─────────────────────────────────────────────────────
+function ThoraxLesionForm({
+  lesion, index, onChange, onRemove, canRemove,
+}: {
+  lesion: ThoraxLesion; index: number;
+  onChange: (l: ThoraxLesion) => void; onRemove: () => void; canRemove: boolean;
+}) {
+  function set<K extends keyof ThoraxLesion>(key: K, val: ThoraxLesion[K]) {
+    onChange({ ...lesion, [key]: val });
+  }
+  return (
+    <div className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-zinc-50/50">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-zinc-700">Lezyon {index + 1}</span>
+        {canRemove && (
+          <button type="button" onClick={onRemove} className="text-xs text-zinc-400 hover:text-red-500">Kaldir</button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Lokalizasyon</label>
+          <select value={lesion.location} onChange={(e) => set("location", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Secin...</option>
+            {THORAX_LOCATIONS.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (<option key={opt} value={opt}>{opt}</option>))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Boyut (mm)</label>
+          <input type="number" min={0} max={300} value={lesion.size_mm}
+            onChange={(e) => set("size_mm", e.target.value)} placeholder="orn: 18"
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Morfoloji</label>
+          <select value={lesion.morphology} onChange={(e) => set("morphology", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="solid nodul">Solid nodul</option>
+            <option value="subsolid (buzlu cam)">Subsolid (buzlu cam)</option>
+            <option value="kismen solid">Kismen solid (miks)</option>
+            <option value="konsolidasyon">Konsolidasyon</option>
+            <option value="kitle">Kitle (&gt;3cm)</option>
+            <option value="kaviter lezyon">Kaviter lezyon</option>
+            <option value="interstisyel patern">Interstisyel patern</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Dansite / Sinyal</label>
+          <select value={lesion.density} onChange={(e) => set("density", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="yumusak doku">Yumusak doku dansitesinde</option>
+            <option value="buzlu cam">Buzlu cam (ground-glass)</option>
+            <option value="kalsifiye">Kalsifiye</option>
+            <option value="yag iceren">Yag iceren</option>
+            <option value="sivi dansitesinde">Sivi dansitesinde</option>
+            <option value="hava iceren">Hava iceren</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Kontrast Tutulumu</label>
+          <select value={lesion.enhancement} onChange={(e) => set("enhancement", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="homojen tutulum">Homojen tutulum</option>
+            <option value="heterojen tutulum">Heterojen tutulum</option>
+            <option value="rim tutulum">Rim tutulum</option>
+            <option value="minimal tutulum">Minimal tutulum</option>
+            <option value="tutulum yok">Tutulum yok</option>
+          </select>
+        </div>
+        <div />
+      </div>
+      <div className="border-t border-zinc-200 pt-3 space-y-2">
+        <div className="text-xs font-medium text-zinc-500">Ek Ozellikler</div>
+        <div className="flex gap-4 flex-wrap">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.spiculation}
+              onChange={(e) => set("spiculation", e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-700" />
+            <span className="text-xs text-red-700 font-medium">Spikülasyon</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.cavitation}
+              onChange={(e) => set("cavitation", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">Kavitasyon</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.calcification}
+              onChange={(e) => set("calcification", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">Kalsifikasyon</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.pleural_contact}
+              onChange={(e) => set("pleural_contact", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">Plevral temas / invazyon</span>
+          </label>
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.lymphadenopathy}
+              onChange={(e) => set("lymphadenopathy", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">Lenfadenopati</span>
+          </label>
+        </div>
+        {lesion.spiculation && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-1">
+            Spikülasyon: Malignite lehine onemli bir morfolojik bulgu.
+          </p>
+        )}
+      </div>
+      <div>
+        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular</label>
+        <input type="text" value={lesion.additional} onChange={(e) => set("additional", e.target.value)}
+          placeholder="orn: Tree-in-bud, plevral efuzyon, perikardial efuzyon..."
+          className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm" />
+      </div>
+    </div>
+  );
+}
+
+// ── Pelvik Lezyon Formu ─────────────────────────────────────────────────────
+function PelvisLesionForm({
+  lesion, index, onChange, onRemove, canRemove, gender,
+}: {
+  lesion: PelvisLesion; index: number;
+  onChange: (l: PelvisLesion) => void; onRemove: () => void; canRemove: boolean;
+  gender: string;
+}) {
+  function set<K extends keyof PelvisLesion>(key: K, val: PelvisLesion[K]) {
+    onChange({ ...lesion, [key]: val });
+  }
+  const locations = gender === "Kadin" ? PELVIS_LOCATIONS_FEMALE : PELVIS_LOCATIONS_MALE;
+  return (
+    <div className="border border-zinc-200 rounded-lg p-3 space-y-3 bg-zinc-50/50">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-zinc-700">Lezyon {index + 1}</span>
+        {canRemove && (
+          <button type="button" onClick={onRemove} className="text-xs text-zinc-400 hover:text-red-500">Kaldir</button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Lokalizasyon</label>
+          <select value={lesion.location} onChange={(e) => set("location", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Secin...</option>
+            {locations.map((group) => (
+              <optgroup key={group.group} label={group.group}>
+                {group.options.map((opt) => (<option key={opt} value={opt}>{opt}</option>))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Boyut (mm)</label>
+          <input type="number" min={0} max={300} value={lesion.size_mm}
+            onChange={(e) => set("size_mm", e.target.value)} placeholder="orn: 25"
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T1 Sinyal</label>
+          <select value={lesion.t1_signal} onChange={(e) => set("t1_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">T2 Sinyal</label>
+          <select value={lesion.t2_signal} onChange={(e) => set("t2_signal", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="hipointens">Hipointens</option>
+            <option value="izointens">Izointens</option>
+            <option value="hiperintens">Hiperintens</option>
+            <option value="belirgin hiperintens">Belirgin hiperintens</option>
+          </select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-500 mb-1">Kontrast Tutulumu</label>
+          <select value={lesion.enhancement} onChange={(e) => set("enhancement", e.target.value)}
+            className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+            <option value="">Belirtilmemis</option>
+            <option value="erken dinamik tutulum">Erken dinamik tutulum</option>
+            <option value="homojen tutulum">Homojen tutulum</option>
+            <option value="heterojen tutulum">Heterojen tutulum</option>
+            <option value="rim tutulum">Rim tutulum</option>
+            <option value="tutulum yok">Tutulum yok</option>
+          </select>
+        </div>
+        <div className="flex flex-col justify-end gap-1.5">
+          <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+            <input type="checkbox" checked={lesion.dwi_restriction}
+              onChange={(e) => set("dwi_restriction", e.target.checked)}
+              className="h-3.5 w-3.5 accent-zinc-700" />
+            <span className="text-xs text-zinc-600">DWI Kisitlanmasi</span>
+          </label>
+        </div>
+      </div>
+      <div className="border-t border-zinc-200 pt-3 space-y-2">
+        <div className="text-xs font-medium text-zinc-500">Invazyon & Lenf Nodu</div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Invazyon</label>
+            <select value={lesion.invasion} onChange={(e) => set("invasion", e.target.value)}
+              className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+              <option value="">Yok / Belirtilmemis</option>
+              <option value="organa sinirli">Organa sinirli</option>
+              <option value="ekstraorganik uzanim">Ekstraorganik uzanim</option>
+              <option value="komsu organ invazyonu">Komsu organ invazyonu</option>
+            </select>
+          </div>
+          <div className="flex flex-col justify-end">
+            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+              <input type="checkbox" checked={lesion.lymph_nodes}
+                onChange={(e) => set("lymph_nodes", e.target.checked)}
+                className="h-3.5 w-3.5 accent-zinc-700" />
+              <span className="text-xs text-zinc-600">Patolojik lenf nodu</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label className="block text-xs text-zinc-500 mb-1">Ek Bulgular</label>
+        <input type="text" value={lesion.additional} onChange={(e) => set("additional", e.target.value)}
+          placeholder="orn: PI-RADS 4, EPE (+), endometrioma, dermoid..."
+          className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm" />
+      </div>
+    </div>
+  );
+}
+
 // ── Streaming Rapor Goruntuleici ─────────────────────────────────────────────
 function ReportViewer({ text, loading }: { text: string; loading: boolean }) {
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -946,22 +1571,46 @@ export default function AgentPage() {
 
   // Brain lesion management
   function updateBrainLesion(idx: number, lesion: BrainLesion) {
-    setForm((f) => ({
-      ...f,
-      brain_lesions: f.brain_lesions.map((l, i) => (i === idx ? lesion : l)),
-    }));
+    setForm((f) => ({ ...f, brain_lesions: f.brain_lesions.map((l, i) => (i === idx ? lesion : l)) }));
   }
   function addBrainLesion() {
-    setForm((f) => ({
-      ...f,
-      brain_lesions: [...f.brain_lesions, { ...emptyBrainLesion }],
-    }));
+    setForm((f) => ({ ...f, brain_lesions: [...f.brain_lesions, { ...emptyBrainLesion }] }));
   }
   function removeBrainLesion(idx: number) {
-    setForm((f) => ({
-      ...f,
-      brain_lesions: f.brain_lesions.filter((_, i) => i !== idx),
-    }));
+    setForm((f) => ({ ...f, brain_lesions: f.brain_lesions.filter((_, i) => i !== idx) }));
+  }
+
+  // Spine lesion management
+  function updateSpineLesion(idx: number, lesion: SpineLesion) {
+    setForm((f) => ({ ...f, spine_lesions: f.spine_lesions.map((l, i) => (i === idx ? lesion : l)) }));
+  }
+  function addSpineLesion() {
+    setForm((f) => ({ ...f, spine_lesions: [...f.spine_lesions, { ...emptySpineLesion }] }));
+  }
+  function removeSpineLesion(idx: number) {
+    setForm((f) => ({ ...f, spine_lesions: f.spine_lesions.filter((_, i) => i !== idx) }));
+  }
+
+  // Thorax lesion management
+  function updateThoraxLesion(idx: number, lesion: ThoraxLesion) {
+    setForm((f) => ({ ...f, thorax_lesions: f.thorax_lesions.map((l, i) => (i === idx ? lesion : l)) }));
+  }
+  function addThoraxLesion() {
+    setForm((f) => ({ ...f, thorax_lesions: [...f.thorax_lesions, { ...emptyThoraxLesion }] }));
+  }
+  function removeThoraxLesion(idx: number) {
+    setForm((f) => ({ ...f, thorax_lesions: f.thorax_lesions.filter((_, i) => i !== idx) }));
+  }
+
+  // Pelvis lesion management
+  function updatePelvisLesion(idx: number, lesion: PelvisLesion) {
+    setForm((f) => ({ ...f, pelvis_lesions: f.pelvis_lesions.map((l, i) => (i === idx ? lesion : l)) }));
+  }
+  function addPelvisLesion() {
+    setForm((f) => ({ ...f, pelvis_lesions: [...f.pelvis_lesions, { ...emptyPelvisLesion }] }));
+  }
+  function removePelvisLesion(idx: number) {
+    setForm((f) => ({ ...f, pelvis_lesions: f.pelvis_lesions.filter((_, i) => i !== idx) }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -1149,11 +1798,19 @@ export default function AgentPage() {
 
   const showAbdomen = form.region === "abdomen" || form.region === "both";
   const showBrain = form.region === "brain" || form.region === "both";
-  const seqOptions = showAbdomen && showBrain
-    ? [...new Set([...ABDOMEN_SEQUENCES, ...BRAIN_SEQUENCES])]
-    : showBrain
-    ? BRAIN_SEQUENCES
-    : ABDOMEN_SEQUENCES;
+  const showSpine = form.region === "spine";
+  const showThorax = form.region === "thorax";
+  const showPelvis = form.region === "pelvis";
+  const seqOptions = (() => {
+    const seqs: string[] = [];
+    if (showAbdomen) seqs.push(...ABDOMEN_SEQUENCES);
+    if (showBrain) seqs.push(...BRAIN_SEQUENCES);
+    if (showSpine) seqs.push(...SPINE_SEQUENCES);
+    if (showThorax) seqs.push(...THORAX_SEQUENCES);
+    if (showPelvis) seqs.push(...PELVIS_SEQUENCES);
+    if (seqs.length === 0) seqs.push(...ABDOMEN_SEQUENCES);
+    return [...new Set(seqs)];
+  })();
 
   return (
     <div className="space-y-6">
@@ -1188,8 +1845,15 @@ export default function AgentPage() {
               <label className="block text-sm font-medium text-zinc-700 mb-1">
                 Inceleme Bolgesi <span className="text-red-500">*</span>
               </label>
-              <div className="flex gap-3">
-                {(["abdomen", "brain", "both"] as const).map((r) => (
+              <div className="flex gap-3 flex-wrap">
+                {([
+                  ["abdomen", "Abdomen"],
+                  ["brain", "Beyin"],
+                  ["spine", "Omurga"],
+                  ["thorax", "Toraks"],
+                  ["pelvis", "Pelvis"],
+                  ["both", "Abdomen + Beyin"],
+                ] as [RegionType, string][]).map(([r, label]) => (
                   <label key={r} className="flex items-center gap-1.5 cursor-pointer text-sm">
                     <input
                       type="radio"
@@ -1199,7 +1863,7 @@ export default function AgentPage() {
                       onChange={() => set("region", r)}
                       className="accent-zinc-700"
                     />
-                    {r === "abdomen" ? "Abdomen" : r === "brain" ? "Beyin" : "Her ikisi"}
+                    {label}
                   </label>
                 ))}
               </div>
@@ -1462,6 +2126,150 @@ export default function AgentPage() {
                   onChange={(e) => set("brain_other", e.target.value)}
                   rows={2}
                   placeholder="orn: Beyaz cevherde T2/FLAIR hiperintens odaklar. SWI'da mikrokanama. Sinuslerde retansiyon kisti."
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ─── Spinal MRI Bulgulari ─────────────────────────────────── */}
+        {showSpine && (
+          <Card>
+            <CardHeader>
+              <CardTitle>3. Spinal MRI Bulgulari</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <SectionLabel>Genel Degerlendirme</SectionLabel>
+                <textarea
+                  value={form.spine_general}
+                  onChange={(e) => set("spine_general", e.target.value)}
+                  rows={3}
+                  placeholder={"orn: Lomber lordoz duzlesmis. L4-L5 ve L5-S1 disk yukseklikleri azalmis.\nSpinal kord normal kalibre ve sinyal ozelliklerinde.\nKonus medullaris L1 seviyesinde sonlaniyor."}
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+              <div>
+                <SectionLabel>Fokal Lezyon(lar)</SectionLabel>
+                <div className="space-y-3">
+                  {form.spine_lesions.map((lesion, idx) => (
+                    <SpineLesionForm
+                      key={idx} lesion={lesion} index={idx}
+                      onChange={(l) => updateSpineLesion(idx, l)}
+                      onRemove={() => removeSpineLesion(idx)}
+                      canRemove={form.spine_lesions.length > 1}
+                    />
+                  ))}
+                </div>
+                <Button type="button" variant="ghost" className="mt-2 text-xs" onClick={addSpineLesion}>
+                  + Lezyon Ekle
+                </Button>
+              </div>
+              <div>
+                <SectionLabel>Diger Bulgular</SectionLabel>
+                <textarea
+                  value={form.spine_other}
+                  onChange={(e) => set("spine_other", e.target.value)}
+                  rows={2}
+                  placeholder="orn: Faset artropati, ligamentum flavum hipertrofisi, sakroiliit bulgulari..."
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ─── Toraks Bulgulari ───────────────────────────────────────── */}
+        {showThorax && (
+          <Card>
+            <CardHeader>
+              <CardTitle>3. Toraks Goruntuleme Bulgulari</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <SectionLabel>Genel Degerlendirme</SectionLabel>
+                <textarea
+                  value={form.thorax_general}
+                  onChange={(e) => set("thorax_general", e.target.value)}
+                  rows={3}
+                  placeholder={"orn: Akciger parankim penceresi: bilateral buzlu cam alanlari.\nMediasten: patolojik LAP yok.\nPlevra: bilateral minimal efuzyon.\nKardiyak siluet normal."}
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+              <div>
+                <SectionLabel>Fokal Lezyon(lar)</SectionLabel>
+                <div className="space-y-3">
+                  {form.thorax_lesions.map((lesion, idx) => (
+                    <ThoraxLesionForm
+                      key={idx} lesion={lesion} index={idx}
+                      onChange={(l) => updateThoraxLesion(idx, l)}
+                      onRemove={() => removeThoraxLesion(idx)}
+                      canRemove={form.thorax_lesions.length > 1}
+                    />
+                  ))}
+                </div>
+                <Button type="button" variant="ghost" className="mt-2 text-xs" onClick={addThoraxLesion}>
+                  + Lezyon Ekle
+                </Button>
+              </div>
+              <div>
+                <SectionLabel>Diger Bulgular</SectionLabel>
+                <textarea
+                  value={form.thorax_other}
+                  onChange={(e) => set("thorax_other", e.target.value)}
+                  rows={2}
+                  placeholder="orn: Plevral efuzyon, perikardial efuzyon, pulmoner emboli, aort anevrizmas..."
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ─── Pelvik MRI Bulgulari ───────────────────────────────────── */}
+        {showPelvis && (
+          <Card>
+            <CardHeader>
+              <CardTitle>3. Pelvik MRI Bulgulari</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <div>
+                <SectionLabel>Genel Degerlendirme</SectionLabel>
+                <textarea
+                  value={form.pelvis_general}
+                  onChange={(e) => set("pelvis_general", e.target.value)}
+                  rows={3}
+                  placeholder={form.gender === "Kadin"
+                    ? "orn: Uterus antever pozisyonda, normal boyutta. Overler bilateral normal.\nEndometrium kalinligi 8mm, homojen.\nDouglas'ta minimal sivi."
+                    : "orn: Prostat boyut: 45cc. Periferik zon homojen.\nSeminal vezikuller simetrik.\nMesane duvari duzgun."}
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+              <div>
+                <SectionLabel>Fokal Lezyon(lar)</SectionLabel>
+                <div className="space-y-3">
+                  {form.pelvis_lesions.map((lesion, idx) => (
+                    <PelvisLesionForm
+                      key={idx} lesion={lesion} index={idx}
+                      onChange={(l) => updatePelvisLesion(idx, l)}
+                      onRemove={() => removePelvisLesion(idx)}
+                      canRemove={form.pelvis_lesions.length > 1}
+                      gender={form.gender}
+                    />
+                  ))}
+                </div>
+                <Button type="button" variant="ghost" className="mt-2 text-xs" onClick={addPelvisLesion}>
+                  + Lezyon Ekle
+                </Button>
+              </div>
+              <div>
+                <SectionLabel>Diger Bulgular</SectionLabel>
+                <textarea
+                  value={form.pelvis_other}
+                  onChange={(e) => set("pelvis_other", e.target.value)}
+                  rows={2}
+                  placeholder="orn: Pelvik LAP, kemik metastazi, asit, endometriozis implantlari..."
                   className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
                 />
               </div>

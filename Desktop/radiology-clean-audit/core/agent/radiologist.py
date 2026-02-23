@@ -23,8 +23,11 @@ import anthropic
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = """Sen deneyimli bir radyoloji uzmanısın. Abdomen MRI (karaciğer, böbrek,
-pankreas, dalak, safra yolları, adrenal bezler) ve Nöroradyoloji (beyin MRI) alanlarında
-uzmansın. Yıllarca üçüncü basamak akademik merkezde çalıştın; binlerce vakayı raporladın.
+pankreas, dalak, safra yolları, adrenal bezler), Nöroradyoloji (beyin MRI),
+Spinal MRI (servikal, torakal, lomber omurga ve spinal kord), Toraks görüntüleme
+(akciğer, mediasten, plevra, kardiyak) ve Pelvik MRI (prostat, mesane, uterus, over,
+rektum) alanlarında uzmansın. Yıllarca üçüncü basamak akademik merkezde çalıştın;
+binlerce vakayı raporladın.
 
 Bir vakayı değerlendirirken **daima aşağıdaki yapılandırılmış düşünce sürecini** adım adım
 takip edersin. Hiçbir adımı atlamazsın. Her başlık altında gerçekten düşünür, gözlemlerini
@@ -94,6 +97,81 @@ gerekçelendirerek yazarsın.
 - **Hemosiderin / kanama:** SWI'da bloom artefaktı, mikrokanama sayısı ve dağılımı
 - **Vasküler yapılar:** Anevrizma, AVM, dural AV fistül, oklüzyon, stenoz, diseksiyon?
 - **Paranazal sinüsler & mastoid:** Mukozal kalınlaşma, retansiyon kisti, sinüzit?
+
+### C) Spinal MRI — Sistematik değerlendirme:
+
+- **Vertebra korpusları:** Yükseklik kaybı, kompresyon kırığı (osteoporotik vs patolojik),
+  kemik iliği sinyal değişikliği (ödem, infiltrasyon, yağlı dejenerasyon), hemanjiom,
+  metastatik tutulum, enfeksiyon (spondilit/spondilodiskit)
+- **İntervertebral diskler:** Disk yüksekliği, hidrasyon (T2 sinyal kaybı), disk hernisi
+  (bulging, protrüzyon, ekstrüzyon, sekestrasyon), anüler yırtık (HIZ — high intensity zone),
+  Modic değişiklikler (tip I: ödem, tip II: yağlı, tip III: sklerotik)
+- **Spinal kanal:** Çap (anteroposterior), spinal stenoz (santral, lateral reses, foraminal),
+  ligamentum flavum hipertrofisi, posterior osteofitler, sinoviyal kist
+- **Spinal kord:** Kalınlık, sinyal değişikliği (T2 hiperintensite — miyelomalazi vs ödem),
+  siringomiyeli/siringobulbi, kord kompresyonu, kord tümörü (intradural-intramedüller),
+  tethered cord, kord atrofisi
+- **Kauda equina & sinir kökleri:** Kalınlaşma, kontrast tutulumu, klumping (araknoidit),
+  sinir kökü kompresyonu (seviye ve taraf)
+- **Faset eklemler:** Artropati, efüzyon, hipertrofi, instabilite bulguları
+- **Paravertebral/epidural alan:** Abse, hematom, kitle, epidural lipomatozis
+- **Sakroiliak eklemler (görünen alan):** Sakroiliit bulguları (kemik iliği ödemi,
+  erozyon, ankiloz, yağlı metaplazi)
+- **Kraniovertikal bileşke (servikal MRI):** Odontoid, atlantoaksiyel stabilite,
+  tonsiller herniasyon (Chiari?), baziler invajinasyon
+
+### D) Toraks MRI/BT — Sistematik değerlendirme:
+
+- **Akciğer parankimi:** Nodül/kitle (boyut, morfoloji, solid vs subsolid vs buzlu cam),
+  konsolidasyon, atelektazi, fibrozis paterni (UIP, NSIP, OP), amfizem, bronşektazi,
+  kavitasyon, pnömonik infiltrasyon, interstisyel akciğer hastalığı
+- **Hiler yapılar:** Lenfadenopati (kısa aks >10 mm), vasküler yapılar
+- **Mediasten:** Anterior mediasten (timoma, teratom, lenfoma, tiroid uzantısı),
+  orta mediasten (lenfadenopati, bronkojenik kist, özofagus patolojisi),
+  posterior mediasten (nörojenik tümör, paravertebral abse, aort patolojisi)
+- **Plevra:** Effüzyon (transüda vs eksüda, lokalize vs serbest), plevral kalınlaşma,
+  plevral plak (asbest ilişkili), pnömotoraks, mezotelyoma, plevral metastaz
+- **Perikard:** Effüzyon, perikardial kalınlaşma, perikardial kist
+- **Kardiyak (görünen alan):** Kardiyomegali, kalp boşlukları, kapak kalsifikasyonu,
+  miyokardiyal sinyal anomalisi, perikardiyal kitle
+- **Büyük damarlar:** Aort (anevrizma, diseksiyon, koarktasyon, intramural hematom),
+  pulmoner arterler (emboli, pulmoner HT?), SVC (tromboz, sendrom)
+- **Göğüs duvarı & kemik:** Kosta lezyonları, sternum, torakal vertebra metastaz/kırık
+- **Trakea & büyük bronşlar:** Stenoz, kitle, dıştan bası
+
+### E) Pelvik MRI — Sistematik değerlendirme:
+
+**Erkek pelvis:**
+- **Prostat:** Boyut (hacim ml), zonal anatomi (periferik zon, transizyonel zon, santral zon),
+  fokal lezyon (PI-RADS sınıflaması), BPH nodülleri, prostatit bulguları,
+  DWI kısıtlanması, ekstraprostatik uzanım (EPE), seminal vezikül invazyonu (SVI),
+  nörovasküler demet tutulumu
+- **Seminal veziküller:** Boyut, simetri, sinyal, invazyon?
+- **Mesane:** Duvar kalınlığı, fokal kitle (VI-RADS), trabekülasyon, divertikül
+- **Rektum:** Duvar kalınlaşması, kitle (mrTNM evreleme), mezorektal fasya ilişkisi (CRM),
+  EMVI (ekstramuural vasküler invazyon)
+
+**Kadın pelvis:**
+- **Uterus:** Boyut, zonal anatomi (endometrium, junctional zone, myometrium),
+  endometrial kalınlık, fokal lezyon, myom (submüköz/intramural/subseröz — FIGO sınıflaması),
+  adenomiyozis (junctional zone kalınlaşması ≥12mm)
+- **Endometrium:** Kalınlık, sinyal homojenitesi, polip, hiperplazi, endometrium kanseri
+  (myometriyal invazyon derinliği, servikal uzanım)
+- **Serviks:** Boyut, sinyal, servikal karsinom (FIGO evreleme), nabothian kist
+- **Overler:** Boyut, folliküler aktivite, kistik lezyon (basit kist, endometrioma,
+  dermoid/matür teratom, müsinöz/seröz kistadenoma, kistadenom), solid kitle,
+  O-RADS MRI sınıflaması
+- **Tubalar:** Hidrosalpinks, tuba kitlesi (ektopik gebelik?)
+- **Douglas boşluğu:** Serbest sıvı, endometriozis implantları
+
+**Her iki cinsiyet:**
+- **Mesane:** Duvar kalınlığı, kitle, taş, divertikül, üreteral jet
+- **Pelvik lenf nodları:** İliak (internal, eksternal, obturator), inguinal, presakral
+  — kısa aks >8mm (obturator/iliak), >10mm (inguinal)
+- **Pelvik kemik & kaslar:** Kemik metastazı, avasküler nekroz (femur başı),
+  kas/yumuşak doku kitlesi, sakral kitle (kordoma, dev hücreli tümör)
+- **Peritoneal kavite:** Asit, peritoneal implant/karsinomatozis
+- **Vasküler yapılar:** İliak arter/ven trombozu, varikosel
 
 ---
 
@@ -265,6 +343,159 @@ En olası tanıdan başlayarak listele. Her biri için:
     beyin sarkması), radyasyon nekrozu vs tümör rekürrensi, lökoareozis
     (yaşa bağlı beyaz cevher değişiklikleri — Fazekas skorlaması)
 
+### Spinal lezyonlar DDx:
+
+**Vertebra & disk:**
+  - **Dejeneratif:** Disk herniasyonu (servikal, lomber — protrüzyon, ekstrüzyon, sekestrasyon),
+    spinal stenoz (konjenital, akkiz), spondilolistezis (dejeneratif, istmik, travmatik),
+    spondiloz/osteoartrit, Schmorl nodülü, anüler yırtık, faset artropati,
+    diffüz idiyopatik skeletal hiperostoz (DISH), ossifiye posterior longitudinal ligament (OPLL)
+  - **Enfeksiyöz:** Spondilodiskit (piyojenik — Staph aureus en sık), tüberküloz spondiliti
+    (Pott hastalığı — paraspinal abse, gibbus deformitesi), epidural abse, bruselloz spondiliti
+  - **Tümöral (vertebra):** Vertebral hemanjiom (tipik, agresif), vertebral metastaz (meme, akciğer,
+    prostat, renal, tiroid — litik/blastik/miks), multipl miyelom/plazmasitom,
+    osteoid osteom, osteoblastom, dev hücreli tümör, kordoma (sakral/klival),
+    Ewing sarkomu, osteosarkom, anevrizmal kemik kisti (ABC), eozinofilik granülom (LCH)
+  - **Metabolik/osteoporotik:** Osteoporotik kompresyon kırığı (akut vs kronik, benign vs malign
+    ayırıcı tanı — kısıtlanma, posterior eleman tutulumu, yumuşak doku kitlesi, konveks posterior
+    korteks), Paget hastalığı (vertebral genişleme, kalın trabekül)
+  - **Travmatik:** Burst kırık, fleksiyon-distraksiyon (Chance) kırığı, faset dislokasyonu,
+    odontoid kırık (tip I/II/III), hangman kırığı, Jefferson kırığı
+
+**Spinal kord (intradural-intramedüller):**
+  - **Tümöral:** Ependimom (en sık yetişkin intramedüller tümör), astrositom (diffüz, pilositik),
+    hemanjioblastom (VHL?), spinal kord metastazı (drop metastaz)
+  - **Demiyelinizan:** MS plağı (kısa segment, eksentrik, dorsolateral kolon), NMOSD
+    (longitudinal transvers miyelit ≥3 segment, santral yerleşim), MOGAD miyeliti,
+    transvers miyelit (idiyopatik, post-infeksiyöz)
+  - **Vasküler:** Spinal kord infarktı (anterior spinal arter sendromu — owl-eye sign),
+    spinal dural AV fistül (kongestif miyelopati, perimedüller flow-void),
+    spinal AVM, kavernom, spinal SAK
+  - **Enfeksiyöz:** Spinal kord absesi, HIV miyelopati, HTLV-1 ilişkili miyelopati
+  - **Diğer:** Siringomiyeli/siringobulbi (post-travmatik, Chiari ilişkili, tümör ilişkili),
+    sarkoidoz, radyasyon miyelopatisi, subakut kombine dejenerasyon (B12 eksikliği),
+    tethered cord sendromu, diastematomiyeli
+
+**İntradural-ekstramedüller:**
+  - Schwannom (en sık intradural-ekstramedüller tümör), meninjiom, nörofibrom,
+    miksopapiller ependimom (filum terminale), drop metastaz (medulloblastom, ependimom,
+    GBM, leptomeningeal karsinomatozis), dermoid/epidermoid, lipom, araknoid kist,
+    araknoidit (klumping, yerleşim, neden — cerrahi, enfeksiyon, intratekal ajan)
+
+**Ekstradural (epidural):**
+  - Epidural abse, epidural hematom (spontan, antikoagülan ilişkili, travmatik),
+    epidural lipomatozis, metastatik epidural kitle, ekstradural lenfoma
+
+### Toraks lezyonları DDx:
+
+**Akciğer nodülü & kitle:**
+  - **Malign:** Akciğer karsinomu (adenokarsinom, skuamöz hücreli, küçük hücreli — SCLC,
+    büyük hücreli, karsinoid tümör — tipik/atipik), pulmoner metastaz (renal, kolorektal,
+    meme, melanom, sarkom, tiroid — kannonball metastaz), pulmoner lenfoma (primer/sekonder)
+  - **Benign:** Hamartom (popcorn kalsifikasyon, yağ içeriği), granülom (tüberküloz,
+    sarkoidoz, fungal — histoplazma, aspergilloma/miçetoma), pulmoner AVM,
+    intrapulmoner lenf nodu, inflamatuar psödotümör
+  - **Enfeksiyöz:** Tüberküloz (aktif: kavitasyon, tree-in-bud, konsolidasyon;
+    latent: kalsifiye granülom, Ghon kompleksi, Ranke kompleksi), pnömoniler (bakteriyel,
+    viral — COVID-19 organizasyon pnömonisi, fungal — aspergilloz: invazif, ABPA,
+    aspergilloma), akciğer absesi, septik emboli
+
+**İnterstisyel akciğer hastalığı (İAH/ILD):**
+  - UIP (usual interstitial pneumonia — IPF, balpeteği + traksiyon bronşektazi),
+    NSIP (non-specific interstitial pneumonia — buzlu cam dominans, subplevral koruma),
+    organizasyon pnömonisi (OP/COP — ters halo, perilobüler patern),
+    hipersensitivite pnömonisi (HP — mozaik atenüasyon, sentrilobüler nodül),
+    sarkoidoz (perilenfatik nodül, bilateral hiler LAP, galaxy sign),
+    silikoz/asbestoz (yumurta kabuğu kalsifikasyon, plevral plak),
+    lenfanjitik karsinomatoz (septal kalınlaşma, peribronkovasküler nodülarite),
+    pulmoner alveolar proteinoz (crazy-paving patern),
+    eozinofilik pnömoni (periferik konsolidasyon — fotografik negatif ödem)
+
+**Mediasten:**
+  - **Anterior:** Timoma (Masaoka evreleme), timik karsinom, timik kist, lenfoma
+    (Hodgkin — genç, nodüler sklerozan; Non-Hodgkin), germ hücreli tümör
+    (matür teratom, seminoma), tiroid uzantısı (retrosternal guatr),
+    paratiroid adenomu (ektopik)
+  - **Orta:** Lenfadenopati (metastatik, lenfoma, sarkoidoz, tüberküloz, Castleman hastalığı),
+    bronkojenik kist, perikardiyal kist, özofagus karsinomu, akalazya
+  - **Posterior:** Nörojenik tümör (schwannom, nörofibrom, ganglionörom, ganglionöroblastom,
+    nöroblastom), lateral meningoseli, paravertebral abse, ekstrameduller hematopoez,
+    aort anevrizması (desendan)
+
+**Plevral hastalık:**
+  - Plevral effüzyon (transüda: KKY, siroz, nefrotik; eksüda: enfeksiyon, malignite,
+    PE, romatoid), ampiyem, plevral mezotelyoma (diffüz plevral kalınlaşma, mediastinal plevra
+    tutulumu), plevral metastaz, pnömotoraks (spontan: primer, sekonder; travmatik),
+    fibröz tümör (soliter), plevral plak (asbest ilişkili), hemotoraks, şilotoraks
+
+**Vasküler:**
+  - Pulmoner emboli (akut: intralüminal dolma defekti, RV dilatasyonu;
+    kronik: web, bant, kronik tromboembolik pulmoner HT — CTEPH),
+    pulmoner arter anevrizması, aort diseksiyonu (Stanford A/B, DeBakey),
+    aort anevrizması (torasik), aort koarktasyonu, intramural hematom,
+    penetran aortik ülser, SVC sendromu
+
+**Göğüs duvarı:**
+  - Kosta metastazı, primer kemik tümörü, yumuşak doku sarkomu, elastofibrom dorsi,
+    göğüs duvarı lenfoma, pektus ekskavatum/karinatum
+
+### Pelvik lezyonlar DDx:
+
+**Prostat:**
+  - Prostat karsinomu (asinüer adenokarsinom — Gleason skoru/ISUP grade grubu,
+    periferik zon vs transizyonel zon, T2 hipointens, DWI kısıtlanma, erken kontrastlanma,
+    EPE — ekstraprostatik uzanım, SVI — seminal vezikül invazyonu, NVB tutulumu),
+    BPH (benign prostat hiperplazi — transizyonel zon nodülleri, BPH nodülü vs kanser),
+    prostatit (akut — diffüz T2 hipointens, ödematöz; kronik — fokal, kalsifikasyon),
+    prostat absesi, prostat kisti (utrikuler kist, müllerian kanal kisti, retansiyon kisti),
+    prostat sarkomu (nadir)
+
+**Mesane:**
+  - Mesane karsinomu (ürotelyal karsinom — papiller, sessil, infiltratif; kas invazif vs
+    non-kas invazif, perivesikal yağ invazyonu), mesane divertikülü (içinde tümör?),
+    mesane taşı, sistit (inflamatuar, radyasyon, eozinofilik), mesane endometriozis,
+    ürakal karsinom (mesane kubbesinde), nörojen mesane, üreterosel
+
+**Uterus & serviks:**
+  - **Myometrium:** Leiomyom/myom (FIGO sınıflaması 0-8, dejenerasyon tipleri: hiyalin,
+    kistik, miksoid, kırmızı, kalsifiye; leiomyosarkom ayırıcı tanı — hızlı büyüme,
+    nekroz, düzensiz sınır, T2 heterojen, DWI kısıtlanma), adenomiyozis
+    (fokal adenomiyom vs diffüz), uterus sarkomu (endometrial stromal sarkom,
+    leiomyosarkom, karsinosarkom)
+  - **Endometrium:** Endometrial polip, endometrial hiperplazi (basit, kompleks, atipik),
+    endometrium kanseri (tip 1: endometrioid, tip 2: seröz, berrak hücreli;
+    myometriyal invazyon derinliği <%50 vs ≥%50, servikal stromal invazyon),
+    endometrial atrofi, submuköz myom (ayırıcı tanı: polip vs myom)
+  - **Serviks:** Servikal karsinom (skuamöz hücreli, adenokarsinom — FIGO 2018 evreleme,
+    parametriyal invazyon, mesane/rektum invazyonu), servikal polip, nabothian kist,
+    servikal stenoz, servikal fibroid
+
+**Over & tuba:**
+  - **Benign kistik:** Fonksiyonel kist (folliküler, korpus luteum), endometrioma
+    (çikolata kisti — T1 hiperintens, T2 shading), matür kistik teratom / dermoid
+    (yağ + kalsifikasyon, Rokitansky çıkıntısı), seröz kistadenoma, müsinöz kistadenoma,
+    parovarian kist
+  - **Malign:** Epitelyal over kanseri (seröz — yüksek grade en sık, müsinöz, endometrioid,
+    berrak hücreli, Brenner tümörü), granüloza hücreli tümör, Sertoli-Leydig tümör,
+    disgerminom, immatür teratom, Krukenberg tümörü (metastatik — mide, kolon),
+    primer peritoneal karsinom, fallop tüpü karsinomu
+  - **Borderline:** Borderline (düşük malign potansiyelli) seröz/müsinöz tümör
+  - **Diğer:** Over torsiyonu (büyümüş over, whirlpool sign, azalmış kontrast),
+    tubo-ovaryan abse (PID), over hiperstimülasyon sendromu, polikistik over (PCOS),
+    over fibrom/tekoma (Meigs sendromu), hidrosalpinks
+
+**Rektum & anal kanal:**
+  - Rektal karsinom (mrTNM evreleme — T evre, N evre, CRM, EMVI, lateral lenf nodu,
+    neoajuvan tedavi yanıtı — mrTRG), rektal polip/adenom, rektal GIST,
+    rektal NET (nöroendokrin tümör), perianal fistül (Parks sınıflaması — inter/trans/supra/
+    ekstrasfinkterik), perianal abse, pilonidal sinüs
+
+**Pelvik kemik & yumuşak doku:**
+  - Sakral kordoma, sakral dev hücreli tümör, sakral Ewing sarkomu, sakral metastaz,
+    sakral yetersizlik kırığı, femur başı avasküler nekroz (Ficat/ARCO evreleme),
+    asetabüler labral yırtık, pelvik yumuşak doku sarkomu, endometriozis
+    (derin infiltratif — rektovajinal septum, uterosakral ligament, mesane)
+
 ---
 
 ## 6. SKORLAMA / SINIFLANDIRMA
@@ -328,6 +559,66 @@ Kromofob: homojen kontrast tutulumu, segmental tutulum paterni.
 
 **Fazekas skorlaması (beyaz cevher değişiklikleri):**
 0: Lezyon yok, 1: Punktat odaklar, 2: Başlangıç konfluans, 3: Büyük konfluent alanlar
+
+**Prostat kanseri (PI-RADS v2.1):**
+| Skor | Anlam |
+|------|-------|
+| PI-RADS 1 | Klinik anlamlı kanser olasılığı çok düşük |
+| PI-RADS 2 | Düşük olasılık |
+| PI-RADS 3 | Ara (belirsiz) |
+| PI-RADS 4 | Yüksek olasılık |
+| PI-RADS 5 | Çok yüksek olasılık (kanser neredeyse kesin) |
+- Periferik zon: DWI/ADC dominant (T2 yardımcı)
+- Transizyonel zon: T2 dominant (DWI yardımcı)
+- EPE bulguları: Düzensiz kapsül, rektoprostatik açı obliterasyonu, NVB asimetrisi
+
+**Mesane kanseri (VI-RADS):**
+| Skor | Kas invazyonu olasılığı |
+|------|------------------------|
+| VI-RADS 1 | Kas invazyonu çok olası değil |
+| VI-RADS 2 | Olası değil |
+| VI-RADS 3 | Belirsiz |
+| VI-RADS 4 | Olası |
+| VI-RADS 5 | Çok olası |
+
+**Over kitlesi (O-RADS MRI):**
+| Skor | Risk |
+|------|------|
+| O-RADS 1 | Normal (fizyolojik) |
+| O-RADS 2 | Neredeyse kesin benign (<1% malignite) |
+| O-RADS 3 | Düşük risk (1-5%) |
+| O-RADS 4 | Orta risk (5-50%) |
+| O-RADS 5 | Yüksek risk (≥50% malignite) |
+
+**Rektal kanser (mrTNM evreleme):**
+- T evre: T1 (submukoza), T2 (muskularis propria), T3a-d (mezorektal yağ invazyonu derinliği),
+  T4a (periton), T4b (komşu organ)
+- CRM (sirkümferansiyal rezeksiyon marjini): Pozitif <1 mm, negatif ≥1 mm
+- EMVI (ekstramuural vasküler invazyon): Pozitif/negatif
+
+**Spinal disk hernisi sınıflaması:**
+- Bulging: Disk çevresinin >%25'i aşar (diffüz)
+- Protrüzyon: Fokal, disk tabanı > herniasyon çapı
+- Ekstrüzyon: Herniasyon çapı > disk tabanı, PLL'yi geçebilir
+- Sekestrasyon: Annektör diskten kopmuş serbest fragman
+- Migrasyon yönü: Kranial, kaudal, foraminal, ekstraforaminal
+
+**Vertebral kompresyon kırığı — benign vs malign ayırıcı tanı:**
+- Benign: T1 bantlaşma, retropulsiyon, vakum fenomeni, yaşa uygun
+- Malign: DWI kısıtlanma, posterior eleman tutulumu, konveks posterior korteks,
+  epidural/paraspinal yumuşak doku kitlesi, multipl seviye, pediküler tutulum
+
+**Akciğer nodülü (Fleischner Society 2017 & Lung-RADS):**
+- Solid nodül: <6mm (izlem gerekmez düşük riskli hastada), 6-8mm (BT takip),
+  >8mm (BT, PET-CT veya biyopsi düşün)
+- Subsolid nodül: Buzlu cam >6mm (takip), kısmen solid >6mm (agresif takip/biyopsi)
+
+**Mediasten kitlesi — anterior mediasten 4T:**
+Timoma, Teratom/germ hücreli, Tiroid (retrosternal), T-hücreli lenfoma
+
+**Plevral hastalık — asbest ilişkili:**
+- Plevral plak → diffüz plevral kalınlaşma → mezotelyoma riski artar
+- BT: kalsifiye plak, >3mm kalınlık, mediastinal plevra tutulumu (malignite?)
 
 ---
 
@@ -420,6 +711,95 @@ def _format_brain_lesion(lesion: dict, idx: int) -> str:
     return "\n".join(parts)
 
 
+def _format_spine_lesion(lesion: dict, idx: int) -> str:
+    """Yapılandırılmış spinal lezyon verisini metin açıklamaya dönüştür."""
+    parts = [f"  Lezyon {idx + 1}:"]
+    if lesion.get("location"):
+        parts.append(f"    Lokalizasyon: {lesion['location']}")
+    if lesion.get("size_mm"):
+        parts.append(f"    Boyut: {lesion['size_mm']} mm")
+    if lesion.get("t1_signal"):
+        parts.append(f"    T1 sinyal: {lesion['t1_signal']}")
+    if lesion.get("t2_signal"):
+        parts.append(f"    T2 sinyal: {lesion['t2_signal']}")
+    if lesion.get("dwi_restriction"):
+        parts.append("    DWI: Kısıtlanma mevcut")
+    if lesion.get("enhancement"):
+        parts.append(f"    Kontrast tutulumu: {lesion['enhancement']}")
+    extra = []
+    if lesion.get("cord_compression"):
+        extra.append("KOD KOMPRESYONU")
+    if lesion.get("nerve_root_compression"):
+        extra.append("sinir kökü kompresyonu")
+    if lesion.get("canal_stenosis"):
+        extra.append("kanal stenozu")
+    if lesion.get("vertebral_fracture"):
+        extra.append("vertebra kırığı")
+    if extra:
+        parts.append(f"    Ek özellikler: {', '.join(extra)}")
+    if lesion.get("additional"):
+        parts.append(f"    Ek: {lesion['additional']}")
+    return "\n".join(parts)
+
+
+def _format_thorax_lesion(lesion: dict, idx: int) -> str:
+    """Yapılandırılmış toraks lezyon verisini metin açıklamaya dönüştür."""
+    parts = [f"  Lezyon {idx + 1}:"]
+    if lesion.get("location"):
+        parts.append(f"    Lokalizasyon: {lesion['location']}")
+    if lesion.get("size_mm"):
+        parts.append(f"    Boyut: {lesion['size_mm']} mm")
+    if lesion.get("morphology"):
+        parts.append(f"    Morfoloji: {lesion['morphology']}")
+    if lesion.get("density"):
+        parts.append(f"    Dansite/Sinyal: {lesion['density']}")
+    if lesion.get("enhancement"):
+        parts.append(f"    Kontrast tutulumu: {lesion['enhancement']}")
+    extra = []
+    if lesion.get("cavitation"):
+        extra.append("kavitasyon")
+    if lesion.get("calcification"):
+        extra.append("kalsifikasyon")
+    if lesion.get("spiculation"):
+        extra.append("spikülasyon")
+    if lesion.get("pleural_contact"):
+        extra.append("plevral temas/invazyon")
+    if lesion.get("lymphadenopathy"):
+        extra.append("lenfadenopati")
+    if extra:
+        parts.append(f"    Ek özellikler: {', '.join(extra)}")
+    if lesion.get("additional"):
+        parts.append(f"    Ek: {lesion['additional']}")
+    return "\n".join(parts)
+
+
+def _format_pelvis_lesion(lesion: dict, idx: int) -> str:
+    """Yapılandırılmış pelvik lezyon verisini metin açıklamaya dönüştür."""
+    parts = [f"  Lezyon {idx + 1}:"]
+    if lesion.get("location"):
+        parts.append(f"    Lokalizasyon: {lesion['location']}")
+    if lesion.get("size_mm"):
+        parts.append(f"    Boyut: {lesion['size_mm']} mm")
+    if lesion.get("t1_signal"):
+        parts.append(f"    T1 sinyal: {lesion['t1_signal']}")
+    if lesion.get("t2_signal"):
+        parts.append(f"    T2 sinyal: {lesion['t2_signal']}")
+    if lesion.get("dwi_restriction"):
+        parts.append("    DWI: Kısıtlanma mevcut")
+    if lesion.get("enhancement"):
+        parts.append(f"    Kontrast tutulumu: {lesion['enhancement']}")
+    extra = []
+    if lesion.get("invasion"):
+        extra.append(f"invazyon: {lesion['invasion']}")
+    if lesion.get("lymph_nodes"):
+        extra.append("patolojik lenf nodu")
+    if extra:
+        parts.append(f"    Ek özellikler: {', '.join(extra)}")
+    if lesion.get("additional"):
+        parts.append(f"    Ek: {lesion['additional']}")
+    return "\n".join(parts)
+
+
 def _build_findings_text(clinical_data: dict) -> str:
     """Yapılandırılmış bulgu alanlarını radyoloji rapor formatına çevir."""
     sections = []
@@ -435,8 +815,11 @@ def _build_findings_text(clinical_data: dict) -> str:
         sections.append("KRONİK KARACİĞER HASTALIGI: Siroz mevcut (LI-RADS risk popülasyonu)")
 
     region = clinical_data.get("region", "abdomen")
-    show_abdomen = region in ("abdomen", "both")
-    show_brain = region in ("brain", "both")
+    show_abdomen = region in ("abdomen", "both", "abdomen_spine", "abdomen_pelvis", "all")
+    show_brain = region in ("brain", "both", "brain_spine", "all")
+    show_spine = region in ("spine", "abdomen_spine", "brain_spine", "all")
+    show_thorax = region in ("thorax", "all")
+    show_pelvis = region in ("pelvis", "abdomen_pelvis", "all")
 
     # ── Abdomen bulguları ──
     if show_abdomen:
@@ -452,7 +835,7 @@ def _build_findings_text(clinical_data: dict) -> str:
             for l in lesions
         )
         if has_lesion:
-            abd_parts.append("\nFokal Karaciğer Lezyonları:")
+            abd_parts.append("\nFokal Abdomen Lezyonları:")
             for i, les in enumerate(lesions):
                 if les.get("location") or les.get("size_mm") or les.get("arterial_enhancement"):
                     abd_parts.append(_format_abdomen_lesion(les, i))
@@ -494,6 +877,84 @@ def _build_findings_text(clinical_data: dict) -> str:
         if len(brain_parts) > 1:
             sections.append("\n".join(brain_parts))
 
+    # ── Spinal bulguları ──
+    if show_spine:
+        spine_parts = ["SPİNAL MRI BULGULARI:"]
+
+        general = clinical_data.get("spine_general", "").strip()
+        if general:
+            spine_parts.append(f"\nGenel Değerlendirme:\n  {general}")
+
+        spine_lesions = clinical_data.get("spine_lesions", [])
+        has_sl = any(
+            l.get("location") or l.get("size_mm") or l.get("enhancement")
+            for l in spine_lesions
+        )
+        if has_sl:
+            spine_parts.append("\nFokal Spinal Lezyonlar:")
+            for i, les in enumerate(spine_lesions):
+                if les.get("location") or les.get("size_mm") or les.get("enhancement"):
+                    spine_parts.append(_format_spine_lesion(les, i))
+
+        other = clinical_data.get("spine_other", "").strip()
+        if other:
+            spine_parts.append(f"\nDiğer Bulgular:\n  {other}")
+
+        if len(spine_parts) > 1:
+            sections.append("\n".join(spine_parts))
+
+    # ── Toraks bulguları ──
+    if show_thorax:
+        thorax_parts = ["TORAKS GÖRÜNTÜLEME BULGULARI:"]
+
+        general = clinical_data.get("thorax_general", "").strip()
+        if general:
+            thorax_parts.append(f"\nGenel Değerlendirme:\n  {general}")
+
+        thorax_lesions = clinical_data.get("thorax_lesions", [])
+        has_tl = any(
+            l.get("location") or l.get("size_mm") or l.get("morphology")
+            for l in thorax_lesions
+        )
+        if has_tl:
+            thorax_parts.append("\nFokal Toraks Lezyonları:")
+            for i, les in enumerate(thorax_lesions):
+                if les.get("location") or les.get("size_mm") or les.get("morphology"):
+                    thorax_parts.append(_format_thorax_lesion(les, i))
+
+        other = clinical_data.get("thorax_other", "").strip()
+        if other:
+            thorax_parts.append(f"\nDiğer Bulgular:\n  {other}")
+
+        if len(thorax_parts) > 1:
+            sections.append("\n".join(thorax_parts))
+
+    # ── Pelvik bulguları ──
+    if show_pelvis:
+        pelvis_parts = ["PELVİK MRI BULGULARI:"]
+
+        general = clinical_data.get("pelvis_general", "").strip()
+        if general:
+            pelvis_parts.append(f"\nGenel Değerlendirme:\n  {general}")
+
+        pelvis_lesions = clinical_data.get("pelvis_lesions", [])
+        has_pl = any(
+            l.get("location") or l.get("size_mm") or l.get("enhancement")
+            for l in pelvis_lesions
+        )
+        if has_pl:
+            pelvis_parts.append("\nFokal Pelvik Lezyonlar:")
+            for i, les in enumerate(pelvis_lesions):
+                if les.get("location") or les.get("size_mm") or les.get("enhancement"):
+                    pelvis_parts.append(_format_pelvis_lesion(les, i))
+
+        other = clinical_data.get("pelvis_other", "").strip()
+        if other:
+            pelvis_parts.append(f"\nDiğer Bulgular:\n  {other}")
+
+        if len(pelvis_parts) > 1:
+            sections.append("\n".join(pelvis_parts))
+
     return "\n\n".join(sections)
 
 
@@ -504,6 +965,10 @@ def _build_content(clinical_data: dict, images: list[dict]) -> list:
         "abdomen": "Abdomen MRI",
         "brain": "Beyin MRI",
         "both": "Abdomen + Beyin MRI",
+        "spine": "Spinal MRI",
+        "thorax": "Toraks Görüntüleme",
+        "pelvis": "Pelvik MRI",
+        "all": "Tüm Bölgeler MRI",
     }
     region_label = region_map.get(clinical_data.get("region", "abdomen"), "MRI")
 
