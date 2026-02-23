@@ -674,6 +674,12 @@ export default function AgentPage() {
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState("");
 
+  // Multi-turn conversation
+  const [followups, setFollowups] = useState<{ role: string; content: string }[]>([]);
+  const [followupQ, setFollowupQ] = useState("");
+  const [followupLoading, setFollowupLoading] = useState(false);
+  const [followupStream, setFollowupStream] = useState("");
+
   // Save state
   const [caseId, setCaseId] = useState("");
   const [patientId, setPatientId] = useState("");
@@ -836,6 +842,77 @@ export default function AgentPage() {
       setError(err?.message ?? "Kaydetme hatasi");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleFollowup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!followupQ.trim() || followupLoading) return;
+    const token = getToken();
+    if (!token) { clearToken(); router.replace("/"); return; }
+
+    const question = followupQ.trim();
+    setFollowupQ("");
+    setFollowupStream("");
+    setFollowupLoading(true);
+    setError(null);
+
+    // Build conversation history for API
+    const history = [
+      { role: "user", content: `[Initial analysis request for: ${form.indication}]` },
+      { role: "assistant", content: report },
+      ...followups,
+    ];
+
+    try {
+      const res = await fetch(`${API}/agent/followup`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ history, question }),
+      });
+      if (res.status === 401) { clearToken(); router.replace("/"); return; }
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        throw new Error(detail?.detail ?? `HTTP ${res.status}`);
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      let fullResponse = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const payload = JSON.parse(line.slice(6));
+            if (payload.text) {
+              fullResponse += payload.text;
+              setFollowupStream(fullResponse);
+            }
+          } catch {}
+        }
+      }
+
+      // Stream bitti, followups listesine ekle
+      setFollowups((prev) => [
+        ...prev,
+        { role: "user", content: question },
+        { role: "assistant", content: fullResponse },
+      ]);
+      setFollowupStream("");
+    } catch (err: any) {
+      setError(err?.message ?? "Takip sorusu hatasi");
+    } finally {
+      setFollowupLoading(false);
     }
   }
 
@@ -1176,6 +1253,37 @@ export default function AgentPage() {
           </CardContent>
         </Card>
 
+        {/* ─── Dogrulama Uyarilari ──────────────────────────────────── */}
+        {showAbdomen && (() => {
+          const warnings: string[] = [];
+          const hasLesion = form.lesions.some(l => l.location || l.size_mm);
+          if (hasLesion && !form.cirrhosis && form.indication.toLowerCase().includes("hcc")) {
+            warnings.push("Siroz isareti secilmedi - LI-RADS skorlamasi dogrulugundan emin olun");
+          }
+          if (hasLesion) {
+            const noArterial = form.lesions.some(l => (l.location || l.size_mm) && !l.arterial_enhancement);
+            if (noArterial) {
+              warnings.push("Arteriyel faz bilgisi eksik - LI-RADS APHE kriteri degerlendirilemez");
+            }
+          }
+          if (form.cirrhosis && !hasLesion) {
+            warnings.push("Siroz mevcut ama fokal lezyon tanimlanmamis");
+          }
+          if (form.sequences.length === 0 && hasLesion) {
+            warnings.push("MRI sekanslari secilmedi - teknik degerlendirme eksik kalabilir");
+          }
+          if (warnings.length === 0) return null;
+          return (
+            <div className="space-y-1">
+              {warnings.map((w, i) => (
+                <div key={i} className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5">
+                  {w}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
         {/* ─── Hata & Submit ──────────────────────────────────────────── */}
         {error && (
           <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
@@ -1197,6 +1305,63 @@ export default function AgentPage() {
 
       {/* Streaming rapor */}
       <ReportViewer text={report} loading={loading} />
+
+      {/* Takip sorulari */}
+      {report && !loading && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Takip Sorusu</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {/* Onceki takip mesajlari */}
+            {followups.map((msg, i) => (
+              <div
+                key={i}
+                className={`text-sm rounded-md px-3 py-2 ${
+                  msg.role === "user"
+                    ? "bg-zinc-100 text-zinc-800 ml-8"
+                    : "bg-white border border-zinc-200 mr-4"
+                }`}
+              >
+                <div className="text-xs text-zinc-400 mb-1">
+                  {msg.role === "user" ? "Siz" : "Radyolog Ajan"}
+                </div>
+                {msg.role === "assistant" ? (
+                  <ReportViewer text={msg.content} loading={false} />
+                ) : (
+                  <p>{msg.content}</p>
+                )}
+              </div>
+            ))}
+
+            {/* Aktif streaming yanit */}
+            {followupStream && (
+              <div className="text-sm bg-white border border-zinc-200 rounded-md px-3 py-2 mr-4">
+                <div className="text-xs text-zinc-400 mb-1">
+                  Radyolog Ajan
+                  <span className="inline-block w-1.5 h-3 bg-zinc-700 animate-pulse rounded-sm ml-1" />
+                </div>
+                <ReportViewer text={followupStream} loading={true} />
+              </div>
+            )}
+
+            {/* Soru girisi */}
+            <form onSubmit={handleFollowup} className="flex gap-2">
+              <input
+                type="text"
+                value={followupQ}
+                onChange={(e) => setFollowupQ(e.target.value)}
+                placeholder="Takip sorusu sorun... (orn: Bu lezyon FNH olabilir mi?)"
+                disabled={followupLoading}
+                className="flex-1 border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+              />
+              <Button type="submit" disabled={followupLoading || !followupQ.trim()}>
+                {followupLoading ? "..." : "Sor"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Kaydetme + LI-RADS paneli */}
       {report && !loading && (

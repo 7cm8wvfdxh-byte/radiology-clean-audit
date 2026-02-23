@@ -401,3 +401,39 @@ async def stream_radiologist_analysis(
         yield f"\n\n[API HATASI] {exc}"
     except Exception as exc:
         yield f"\n\n[HATA] {exc}"
+
+
+async def stream_followup(
+    history: list[dict],
+    followup_question: str,
+) -> AsyncGenerator[str, None]:
+    """
+    Mevcut konuşma geçmişine yeni bir kullanıcı sorusu ekleyerek takip yanıtı stream et.
+
+    history: [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}, ...]
+    followup_question: Kullanıcının yeni sorusu
+    """
+    api_key = os.getenv("ANTHROPIC_API_KEY")
+    if not api_key:
+        yield "[HATA] ANTHROPIC_API_KEY ortam değişkeni tanımlı değil."
+        return
+
+    model = os.getenv("AGENT_MODEL", "claude-opus-4-6")
+    client = anthropic.AsyncAnthropic(api_key=api_key)
+
+    messages = list(history)
+    messages.append({"role": "user", "content": followup_question})
+
+    try:
+        async with client.messages.stream(
+            model=model,
+            max_tokens=4096,
+            system=SYSTEM_PROMPT,
+            messages=messages,
+        ) as stream:
+            async for chunk in stream.text_stream:
+                yield chunk
+    except anthropic.APIError as exc:
+        yield f"\n\n[API HATASI] {exc}"
+    except Exception as exc:
+        yield f"\n\n[HATA] {exc}"

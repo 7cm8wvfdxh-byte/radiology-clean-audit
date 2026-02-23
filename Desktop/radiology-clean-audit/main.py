@@ -21,7 +21,7 @@ from core.auth import (
     verify_password,
 )
 from core.agent.dicom_utils import extract_images_from_dicom
-from core.agent.radiologist import stream_radiologist_analysis
+from core.agent.radiologist import stream_radiologist_analysis, stream_followup
 from store.store import save_case, get_case, list_cases
 from store.user_store import ensure_default_admin, get_user
 from store.patient_store import create_patient, get_patient, list_patients, get_patient_cases
@@ -306,3 +306,34 @@ def agent_save(
     )
     save_case(body.case_id, pack, created_by=user.username, patient_id=body.patient_id)
     return pack
+
+
+class FollowupRequest(BaseModel):
+    history: list = Field(..., description="Konuşma geçmişi [{role, content}, ...]")
+    question: str = Field(..., min_length=1, description="Takip sorusu")
+
+
+@app.post("/agent/followup", tags=["agent"])
+async def agent_followup(
+    body: FollowupRequest,
+    user: UserInToken = Depends(require_role("admin", "radiologist")),
+):
+    """
+    Mevcut konuşma geçmişine takip sorusu gönderir.
+    Yanıt SSE stream olarak gelir.
+    """
+    async def event_stream():
+        async for chunk in stream_followup(body.history, body.question):
+            payload = json.dumps({"text": chunk, "done": False}, ensure_ascii=False)
+            yield f"data: {payload}\n\n"
+        yield f"data: {json.dumps({'text': '', 'done': True})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
