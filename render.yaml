@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: radiology-clean-api
+    runtime: python
+    region: frankfurt
+    rootDir: Desktop/radiology-clean-audit
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: AUDIT_SECRET
+        generateValue: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEFAULT_ADMIN_USER
+        value: admin
+      - key: DEFAULT_ADMIN_PASS
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://radiology-clean-audit-rd4p.vercel.app
+      - key: VERIFY_BASE_URL
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.12.0"

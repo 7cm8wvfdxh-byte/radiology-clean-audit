@@ -83,7 +83,7 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "http://localhost:3000,http://127.0.0.1:3000,https://radiology-clean-audit-rd4p.vercel.app"
 ).split(",")
 
 app.add_middleware(
