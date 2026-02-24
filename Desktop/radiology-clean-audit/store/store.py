@@ -1,7 +1,8 @@
 import json
 import logging
-from db import SessionLocal, engine, Base
-from models import Case, CaseVersion
+from sqlalchemy import func
+from db import get_db, engine, Base
+from models import Case, CaseVersion, Patient
 
 logger = logging.getLogger(__name__)
 
@@ -9,8 +10,7 @@ logger = logging.getLogger(__name__)
 Base.metadata.create_all(bind=engine)
 
 def save_case(case_id: str, audit_pack: dict, created_by: str = "", patient_id: str = None) -> None:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         pack_json = json.dumps(audit_pack, ensure_ascii=False)
         version = audit_pack.get("version", 1)
         generated_at = audit_pack.get("generated_at", "")
@@ -43,26 +43,28 @@ def save_case(case_id: str, audit_pack: dict, created_by: str = "", patient_id: 
         )
         db.add(ver)
         db.commit()
-    except Exception as exc:
-        logger.error("Vaka kaydedilemedi %s: %s", case_id, exc)
-        db.rollback()
-        raise
-    finally:
-        db.close()
 
 def get_case(case_id: str):
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         rec = db.query(Case).filter(Case.case_id == case_id).first()
         if not rec:
             return None
         return json.loads(rec.audit_pack_json)
-    finally:
-        db.close()
+
+def delete_case(case_id: str) -> bool:
+    """Bir vakayı ve tüm versiyon geçmişini siler."""
+    with get_db() as db:
+        rec = db.query(Case).filter(Case.case_id == case_id).first()
+        if not rec:
+            return False
+        db.query(CaseVersion).filter(CaseVersion.case_id == case_id).delete()
+        db.delete(rec)
+        db.commit()
+        logger.info("Vaka silindi: %s", case_id)
+        return True
 
 def list_cases(limit: int = 50):
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         rows = db.query(Case).order_by(Case.created_at.desc()).limit(limit).all()
         result = []
         for r in rows:
@@ -80,14 +82,11 @@ def list_cases(limit: int = 50):
                 pass
             result.append(item)
         return result
-    finally:
-        db.close()
 
 
 def get_case_versions(case_id: str) -> list[dict]:
     """Bir vakanın tüm versiyon geçmişini döner (yeniden eskiye)."""
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         rows = db.query(CaseVersion).filter(
             CaseVersion.case_id == case_id
         ).order_by(CaseVersion.version.desc()).all()
@@ -109,16 +108,16 @@ def get_case_versions(case_id: str) -> list[dict]:
                 "signature": pack.get("signature", "")[:16],
             })
         return result
-    finally:
-        db.close()
 
 
 def get_case_stats() -> dict:
     """Tüm vakaların LI-RADS dağılımı ve istatistiklerini döner."""
-    db = SessionLocal()
-    try:
-        rows = db.query(Case).all()
-        total = len(rows)
+    with get_db() as db:
+        total = db.query(func.count(Case.case_id)).scalar()
+        patient_count = db.query(func.count(Patient.patient_id)).scalar()
+
+        # Sadece son 200 kaydi isle (buyuk veri setlerinde bellek tasarrufu)
+        rows = db.query(Case).order_by(Case.created_at.desc()).limit(200).all()
 
         lirads_dist: dict[str, int] = {}
         recent = []
@@ -150,14 +149,6 @@ def get_case_stats() -> dict:
             if category in ("LR-4", "LR-5", "LR-M", "LR-TIV"):
                 high_risk.append(item)
 
-        # Son oluşturulanlara göre sırala
-        recent.sort(key=lambda x: x.get("created_at", ""), reverse=True)
-        high_risk.sort(key=lambda x: x.get("created_at", ""), reverse=True)
-
-        # Hasta sayısını hesapla
-        from models import Patient
-        patient_count = db.query(Patient).count()
-
         return {
             "total_cases": total,
             "total_patients": patient_count,
@@ -165,5 +156,3 @@ def get_case_stats() -> dict:
             "recent_cases": recent[:10],
             "high_risk_cases": high_risk[:10],
         }
-    finally:
-        db.close()

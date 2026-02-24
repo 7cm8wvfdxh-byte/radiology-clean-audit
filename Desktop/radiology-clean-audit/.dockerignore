@@ -1,0 +1,16 @@
+.git
+.env
+.env.local
+*.db
+__pycache__
+*.pyc
+.venv
+venv
+frontend/node_modules
+frontend/.next
+*.pdf
+qr_*.png
+.DS_Store
+.vscode
+.idea
+tests/

@@ -268,3 +268,198 @@ class TestAgentSave:
         }
         res = client.post("/agent/save", json=body, headers=self._token())
         assert res.status_code == 422
+
+
+class TestDeleteCase:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_delete_existing_case(self):
+        headers = self._token()
+        # Önce vaka oluştur
+        client.post(f"/analyze/DEL-TEST-001", json=ANALYZE_BODY, headers=headers)
+        # Silme
+        res = client.delete("/cases/DEL-TEST-001", headers=headers)
+        assert res.status_code == 200
+        assert res.json()["deleted"] is True
+        # Artık bulunamaz
+        res = client.get("/cases/DEL-TEST-001", headers=headers)
+        assert res.status_code == 404
+
+    def test_delete_nonexistent_case(self):
+        res = client.delete("/cases/NONEXISTENT-DEL", headers=self._token())
+        assert res.status_code == 404
+
+    def test_delete_without_auth_denied(self):
+        res = client.delete("/cases/DEL-TEST-001")
+        assert res.status_code == 401
+
+
+class TestPatients:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_create_patient(self):
+        body = {
+            "patient_id": "P-TEST-001",
+            "full_name": "Test Hasta",
+            "birth_date": "1980-05-15",
+            "gender": "M",
+        }
+        res = client.post("/patients", json=body, headers=self._token())
+        assert res.status_code == 200
+        data = res.json()
+        assert data["patient_id"] == "P-TEST-001"
+        assert data["full_name"] == "Test Hasta"
+
+    def test_create_duplicate_patient(self):
+        body = {
+            "patient_id": "P-TEST-001",
+            "full_name": "Tekrar Hasta",
+        }
+        res = client.post("/patients", json=body, headers=self._token())
+        assert res.status_code == 409
+
+    def test_list_patients(self):
+        res = client.get("/patients", headers=self._token())
+        assert res.status_code == 200
+        assert isinstance(res.json(), list)
+
+    def test_get_patient(self):
+        res = client.get("/patients/P-TEST-001", headers=self._token())
+        assert res.status_code == 200
+        data = res.json()
+        assert data["patient_id"] == "P-TEST-001"
+        assert "cases" in data
+
+    def test_get_nonexistent_patient(self):
+        res = client.get("/patients/P-NONEXISTENT", headers=self._token())
+        assert res.status_code == 404
+
+
+class TestStats:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_stats_returns_expected_fields(self):
+        res = client.get("/stats", headers=self._token())
+        assert res.status_code == 200
+        data = res.json()
+        assert "total_cases" in data
+        assert "total_patients" in data
+        assert "lirads_distribution" in data
+        assert "recent_cases" in data
+        assert "high_risk_cases" in data
+        assert isinstance(data["total_cases"], int)
+        assert isinstance(data["lirads_distribution"], dict)
+
+    def test_stats_without_auth(self):
+        res = client.get("/stats")
+        assert res.status_code == 401
+
+
+class TestSecondReadings:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_create_second_reading(self):
+        headers = self._token()
+        # Önce vaka oluştur
+        client.post(f"/analyze/SR-TEST-001", json=ANALYZE_BODY, headers=headers)
+        body = {
+            "case_id": "SR-TEST-001",
+            "reader_username": "testadmin",
+            "original_category": "LR-5",
+        }
+        res = client.post("/second-readings", json=body, headers=headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert data["case_id"] == "SR-TEST-001"
+        assert data["status"] == "pending"
+
+    def test_list_second_readings(self):
+        res = client.get("/second-readings", headers=self._token())
+        assert res.status_code == 200
+        assert isinstance(res.json(), list)
+
+    def test_complete_second_reading(self):
+        headers = self._token()
+        # Listeyi al ve ilk pending'i bul
+        readings = client.get("/second-readings?status=pending", headers=headers).json()
+        if readings:
+            reading_id = readings[0]["id"]
+            body = {
+                "agreement": "agree",
+                "second_category": "LR-5",
+                "comments": "Onaylandi",
+            }
+            res = client.post(f"/second-readings/{reading_id}/complete", json=body, headers=headers)
+            assert res.status_code == 200
+            assert res.json()["status"] == "completed"
+
+
+class TestCaseVersions:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_versions_returns_list(self):
+        headers = self._token()
+        # Vaka oluştur (eğer yoksa)
+        client.post(f"/analyze/{CASE_ID}", json=ANALYZE_BODY, headers=headers)
+        res = client.get(f"/cases/{CASE_ID}/versions", headers=headers)
+        assert res.status_code == 200
+        data = res.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert "version" in data[0]
+        assert "category" in data[0]
+
+    def test_versions_nonexistent_case(self):
+        res = client.get("/cases/NONEXISTENT-VER/versions", headers=self._token())
+        assert res.status_code == 404
+
+
+class TestExport:
+    def _token(self):
+        res = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        return {"Authorization": f"Bearer {res.json()['access_token']}"}
+
+    def test_export_json(self):
+        headers = self._token()
+        client.post(f"/analyze/{CASE_ID}", json=ANALYZE_BODY, headers=headers)
+        res = client.get(f"/export/json/{CASE_ID}", headers=headers)
+        assert res.status_code == 200
+        assert "case_id" in res.json()
+
+    def test_export_json_nonexistent(self):
+        res = client.get("/export/json/NONEXISTENT-999", headers=self._token())
+        assert res.status_code == 404

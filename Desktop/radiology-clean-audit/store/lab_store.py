@@ -1,7 +1,10 @@
 """Laboratuvar sonuçları CRUD işlemleri."""
 import datetime
-from db import SessionLocal, engine, Base
+import logging
+from db import get_db, engine, Base
 from models import LabResult
+
+logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 
@@ -16,8 +19,7 @@ def create_lab_result(
     test_date: str = None,
     created_by: str = "",
 ) -> dict:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         lr = LabResult(
             patient_id=patient_id,
             test_name=test_name,
@@ -32,33 +34,27 @@ def create_lab_result(
         db.add(lr)
         db.commit()
         db.refresh(lr)
+        logger.info("Lab sonucu olusturuldu: patient=%s, test=%s", patient_id, test_name)
         return _to_dict(lr)
-    finally:
-        db.close()
 
 
 def get_patient_labs(patient_id: str, limit: int = 50) -> list[dict]:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         rows = db.query(LabResult).filter(
             LabResult.patient_id == patient_id
         ).order_by(LabResult.test_date.desc()).limit(limit).all()
         return [_to_dict(r) for r in rows]
-    finally:
-        db.close()
 
 
 def delete_lab_result(lab_id: int) -> bool:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         lr = db.query(LabResult).filter(LabResult.id == lab_id).first()
         if not lr:
             return False
         db.delete(lr)
         db.commit()
+        logger.info("Lab sonucu silindi: id=%d", lab_id)
         return True
-    finally:
-        db.close()
 
 
 def _to_dict(lr: LabResult) -> dict:

@@ -33,7 +33,7 @@ from core.auth import (
 )
 from core.agent.dicom_utils import extract_images_from_dicom
 from core.agent.radiologist import stream_radiologist_analysis, stream_followup
-from store.store import save_case, get_case, list_cases, get_case_stats, get_case_versions
+from store.store import save_case, get_case, delete_case, list_cases, get_case_stats, get_case_versions
 from store.user_store import ensure_default_admin, get_user
 from store.patient_store import create_patient, get_patient, list_patients, get_patient_cases
 from store.lab_store import create_lab_result, get_patient_labs, delete_lab_result
@@ -163,6 +163,19 @@ def get_case_detail(
     if pack is None:
         raise HTTPException(status_code=404, detail="Case not found")
     return pack
+
+
+@app.delete("/cases/{case_id}", tags=["cases"])
+def delete_case_endpoint(
+    case_id: str,
+    user: UserInToken = Depends(require_role("admin")),
+):
+    """Bir vakayı ve tüm versiyon geçmişini siler (sadece admin)."""
+    ok = delete_case(case_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Case not found")
+    logger.info("Vaka silindi: %s (kullanici: %s)", case_id, user.username)
+    return {"deleted": True, "case_id": case_id}
 
 
 # ---------------------------------------------------------------------------
