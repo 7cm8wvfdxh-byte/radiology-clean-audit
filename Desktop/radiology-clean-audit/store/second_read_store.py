@@ -1,7 +1,10 @@
 """İkinci okuma (Second Reading) CRUD işlemleri."""
 import datetime
-from db import SessionLocal, engine, Base
+import logging
+from db import get_db, engine, Base
 from models import SecondReading
+
+logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 
@@ -11,8 +14,7 @@ def create_second_reading(
     reader_username: str,
     original_category: str = None,
 ) -> dict:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         existing = db.query(SecondReading).filter(
             SecondReading.case_id == case_id,
             SecondReading.reader_username == reader_username,
@@ -30,9 +32,8 @@ def create_second_reading(
         db.add(sr)
         db.commit()
         db.refresh(sr)
+        logger.info("Ikinci okuma olusturuldu: case=%s, reader=%s", case_id, reader_username)
         return _to_dict(sr)
-    finally:
-        db.close()
 
 
 def complete_second_reading(
@@ -41,8 +42,7 @@ def complete_second_reading(
     second_category: str = None,
     comments: str = None,
 ) -> dict:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         sr = db.query(SecondReading).filter(SecondReading.id == reading_id).first()
         if not sr:
             raise ValueError("İkinci okuma bulunamadı")
@@ -53,32 +53,25 @@ def complete_second_reading(
         sr.completed_at = datetime.datetime.utcnow().isoformat() + "Z"
         db.commit()
         db.refresh(sr)
+        logger.info("Ikinci okuma tamamlandi: id=%d, agreement=%s", reading_id, agreement)
         return _to_dict(sr)
-    finally:
-        db.close()
 
 
 def list_second_readings(status_filter: str = None, limit: int = 50) -> list[dict]:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         q = db.query(SecondReading)
         if status_filter:
             q = q.filter(SecondReading.status == status_filter)
         rows = q.order_by(SecondReading.created_at.desc()).limit(limit).all()
         return [_to_dict(r) for r in rows]
-    finally:
-        db.close()
 
 
 def get_case_second_readings(case_id: str) -> list[dict]:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         rows = db.query(SecondReading).filter(
             SecondReading.case_id == case_id
         ).order_by(SecondReading.created_at.desc()).all()
         return [_to_dict(r) for r in rows]
-    finally:
-        db.close()
 
 
 def _to_dict(sr: SecondReading) -> dict:

@@ -1,6 +1,6 @@
 """Kullanıcı CRUD işlemleri."""
 import logging
-from db import SessionLocal, engine, Base
+from db import get_db, engine, Base
 from models import User
 from core.auth import hash_password
 
@@ -10,16 +10,12 @@ Base.metadata.create_all(bind=engine)
 
 
 def get_user(username: str):
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         return db.query(User).filter(User.username == username).first()
-    finally:
-        db.close()
 
 
 def create_user(username: str, plain_password: str, role: str = "viewer", full_name: str = "") -> User:
-    db = SessionLocal()
-    try:
+    with get_db() as db:
         existing = db.query(User).filter(User.username == username).first()
         if existing:
             raise ValueError(f"Kullanıcı zaten mevcut: {username}")
@@ -34,12 +30,6 @@ def create_user(username: str, plain_password: str, role: str = "viewer", full_n
         db.refresh(user)
         logger.info("Kullanici olusturuldu: %s (rol: %s)", username, role)
         return user
-    except Exception as exc:
-        db.rollback()
-        logger.error("Kullanici olusturulamadi %s: %s", username, exc)
-        raise
-    finally:
-        db.close()
 
 
 def ensure_default_admin():
@@ -47,10 +37,11 @@ def ensure_default_admin():
     import os
     admin_user = os.getenv("DEFAULT_ADMIN_USER", "admin")
     admin_pass = os.getenv("DEFAULT_ADMIN_PASS", "admin123")
-    if admin_pass in ("admin123", "CHANGE_ME_ADMIN_PASSWORD"):
+    weak_passwords = ("admin123", "CHANGE_ME_ADMIN_PASSWORD", "password", "123456")
+    if admin_pass in weak_passwords or len(admin_pass) < 8:
         logger.warning(
             "DEFAULT_ADMIN_PASS varsayilan veya zayif! "
-            "Production ortaminda mutlaka degistirin."
+            "Production ortaminda mutlaka degistirin (en az 12 karakter onerilir)."
         )
     if not get_user(admin_user):
         create_user(admin_user, admin_pass, role="admin", full_name="Sistem Yoneticisi")
