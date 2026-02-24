@@ -10,10 +10,12 @@ os.environ.setdefault("DEFAULT_ADMIN_USER", "testadmin")
 os.environ.setdefault("DEFAULT_ADMIN_PASS", "testpass123")
 
 from fastapi.testclient import TestClient
+from db import init_db
 from main import app
 from store.user_store import ensure_default_admin
 
 # TestClient'ta lifespan event'ı çalışmaz, manuel tetikle
+init_db()
 ensure_default_admin()
 
 client = TestClient(app)

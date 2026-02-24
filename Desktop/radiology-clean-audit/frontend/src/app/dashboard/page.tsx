@@ -10,6 +10,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { SkeletonStats, SkeletonCard } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE, LIRADS_ORDER } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 
 type Stats = {
   total_cases: number;
@@ -57,8 +58,8 @@ export default function DashboardPage() {
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         setStats(await res.json());
-      } catch (e: any) {
-        setErr(e?.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setErr(getErrorMessage(e));
       } finally {
         setLoading(false);
       }

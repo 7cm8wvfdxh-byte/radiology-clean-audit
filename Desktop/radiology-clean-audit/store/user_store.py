@@ -1,12 +1,10 @@
 """Kullanıcı CRUD işlemleri."""
 import logging
-from db import get_db, engine, Base
+from db import get_db
 from models import User
 from core.auth import hash_password
 
 logger = logging.getLogger(__name__)
-
-Base.metadata.create_all(bind=engine)
 
 
 def get_user(username: str):

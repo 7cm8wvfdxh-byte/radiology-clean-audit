@@ -41,6 +41,13 @@ def detect_critical_findings(clinical_data: dict, lirads_result: dict = None) ->
                 "message": "LR-4: Muhtemel HCC — yakın takip veya biyopsi",
                 "action": "3 ay içinde kontrol MRI veya biyopsi planlanmalı.",
             })
+        elif cat == "LR-3":
+            findings.append({
+                "level": "significant",
+                "code": "LIRADS_3",
+                "message": "LR-3: Orta olasılık — 6 aylık sürveyans önerilir",
+                "action": "6 ay içinde kontrol MRI planlanmalı. Lezyon büyümesi veya yeni majör kriter gelişimi takip edilmeli.",
+            })
 
     # --- Abdomen Kritik Bulgular ---
     for les in clinical_data.get("lesions", []):

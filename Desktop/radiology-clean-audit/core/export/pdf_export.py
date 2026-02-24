@@ -27,6 +27,7 @@ def _lirads_color(category: str) -> str:
         "LR-4": "#ea580c",
         "LR-5": "#dc2626",
         "LR-M": "#9333ea",
+        "LR-TIV": "#dc2626",
     }
     return colors.get(category, "#71717a")
 

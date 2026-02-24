@@ -10,6 +10,7 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { SkeletonList } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 
 type Patient = {
   patient_id: string;
@@ -56,8 +57,8 @@ export default function PatientsPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setPatients(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setErr(e?.message ?? "Yukleme hatasi");
+    } catch (e: unknown) {
+      setErr(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -108,8 +109,8 @@ export default function PatientsPage() {
       setFieldErrors({});
       setShowForm(false);
       fetchPatients();
-    } catch (e: any) {
-      setFormErr(e?.message ?? "Olusturma hatasi");
+    } catch (e: unknown) {
+      setFormErr(getErrorMessage(e));
     } finally {
       setFormLoading(false);
     }

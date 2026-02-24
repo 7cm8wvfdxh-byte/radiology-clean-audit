@@ -14,7 +14,7 @@ if not _audit_secret_raw or _audit_secret_raw in ("CHANGE_ME_SECRET", "CHANGE_ME
 AUDIT_SECRET = _audit_secret_raw
 
 def _now_iso():
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 def _canon(obj):
     return json.dumps(obj, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -171,31 +171,25 @@ def run_lirads_decision(dsl: dict) -> dict:
         applied, ancillary_favor_hcc, ancillary_favor_benign,
     )
 
-# -------- BUILD PACK --------
-def build_pack(case_id: str, dsl: dict, verify_base_url: str, previous_pack: dict = None) -> dict:
-    """
-    Audit pack oluşturur.
-
-    previous_pack: Mevcut bir versiyon varsa, zincir (audit trail) için önceki
-    paketin hash'i yeni pakete dahil edilir.
-    """
+# -------- PACK ASSEMBLY (shared) --------
+def _assemble_pack(
+    case_id: str,
+    content: dict,
+    verify_base_url: str,
+    previous_pack: Optional[dict] = None,
+) -> dict:
+    """Ortak pack oluşturma mantığı — hash, imza, versiyon zinciri."""
     generated_at = _now_iso()
-    lirads_result = run_lirads_decision(dsl)
-    decision = lirads_result["label"]
-
-    content = {"dsl": dsl, "decision": decision, "lirads": lirads_result}
 
     hashes = {
         "dsl_sha256": _sha256_hex(_canon(content["dsl"])),
         "decision_sha256": _sha256_hex(_canon({"decision": content["decision"]})),
     }
 
-    # Versiyon zinciri: önceki pack varsa hash'ini ekle
     version = 1
     previous_hash = None
     if previous_pack:
         version = previous_pack.get("version", 1) + 1
-        # İmza hariç önceki paketin canonical hash'i
         prev_canonical = {k: v for k, v in previous_pack.items() if k != "verify_url"}
         previous_hash = _sha256_hex(_canon(prev_canonical))
 
@@ -226,6 +220,20 @@ def build_pack(case_id: str, dsl: dict, verify_base_url: str, previous_pack: dic
         pack["previous_hash"] = previous_hash
 
     return pack
+
+
+# -------- BUILD PACK --------
+def build_pack(case_id: str, dsl: dict, verify_base_url: str, previous_pack: dict = None) -> dict:
+    """
+    Audit pack oluşturur.
+
+    previous_pack: Mevcut bir versiyon varsa, zincir (audit trail) için önceki
+    paketin hash'i yeni pakete dahil edilir.
+    """
+    lirads_result = run_lirads_decision(dsl)
+    decision = lirads_result["label"]
+    content = {"dsl": dsl, "decision": decision, "lirads": lirads_result}
+    return _assemble_pack(case_id, content, verify_base_url, previous_pack)
 
 # -------- VERIFY FULL --------
 def verify_pack_full(pack: dict) -> dict:
@@ -312,7 +320,10 @@ def extract_dsl_from_findings(clinical_data: dict) -> dict:
         capsule = bool(les.get("capsule", False))
 
         size_str = str(les.get("size_mm", "0")).strip()
-        size = int(size_str) if size_str.isdigit() else 0
+        try:
+            size = round(float(size_str))
+        except (ValueError, TypeError):
+            size = 0
 
         # LR-M: rim APHE + targetoid özellikler
         peripheral_washout = bool(les.get("peripheral_washout", False))
@@ -378,8 +389,6 @@ def build_agent_pack(
     """
     dsl = extract_dsl_from_findings(clinical_data)
     lirads_result = run_lirads_decision(dsl)
-
-    generated_at = _now_iso()
     decision = lirads_result["label"]
 
     content = {
@@ -395,43 +404,4 @@ def build_agent_pack(
             "risk_factors": clinical_data.get("risk_factors"),
         },
     }
-
-    hashes = {
-        "dsl_sha256": _sha256_hex(_canon(content["dsl"])),
-        "decision_sha256": _sha256_hex(_canon({"decision": content["decision"]})),
-    }
-
-    version = 1
-    previous_hash = None
-    if previous_pack:
-        version = previous_pack.get("version", 1) + 1
-        prev_canonical = {k: v for k, v in previous_pack.items() if k != "verify_url"}
-        previous_hash = _sha256_hex(_canon(prev_canonical))
-
-    sign_payload = {
-        "schema": "radiology-clean.audit-pack.v2",
-        "case_id": case_id,
-        "generated_at": generated_at,
-        "version": version,
-        "hashes": hashes,
-    }
-    if previous_hash:
-        sign_payload["previous_hash"] = previous_hash
-
-    signature = _hmac_hex(AUDIT_SECRET, _canon(sign_payload))
-    verify_url = f"{verify_base_url}/verify/{case_id}?sig={signature}"
-
-    pack = {
-        "schema": "radiology-clean.audit-pack.v2",
-        "generated_at": generated_at,
-        "case_id": case_id,
-        "version": version,
-        "content": content,
-        "hashes": hashes,
-        "signature": signature,
-        "verify_url": verify_url,
-    }
-    if previous_hash:
-        pack["previous_hash"] = previous_hash
-
-    return pack
+    return _assemble_pack(case_id, content, verify_base_url, previous_pack)

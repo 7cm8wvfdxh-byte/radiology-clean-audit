@@ -20,7 +20,7 @@ class Case(Base):
     __tablename__ = "cases"
 
     case_id = Column(String, primary_key=True, index=True)
-    created_at = Column(String, nullable=False)
+    created_at = Column(String, nullable=False, index=True)
     created_by = Column(String, nullable=True)
 
     patient_id = Column(String, ForeignKey("patients.patient_id"), nullable=True, index=True)
@@ -73,7 +73,7 @@ class SecondReading(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     case_id = Column(String, ForeignKey("cases.case_id"), nullable=False, index=True)
     reader_username = Column(String, nullable=False)
-    status = Column(String, nullable=False, default="pending")  # pending | in_progress | completed
+    status = Column(String, nullable=False, default="pending", index=True)  # pending | in_progress | completed
     agreement = Column(String, nullable=True)  # agree | disagree | partial
     original_category = Column(String, nullable=True)
     second_category = Column(String, nullable=True)

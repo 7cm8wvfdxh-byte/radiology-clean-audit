@@ -11,6 +11,7 @@ import { SkeletonList } from "@/components/Skeleton";
 import { FormField, Input, Select, Textarea } from "@/components/ui/FormField";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE, LIRADS_ORDER } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 
 const LIRADS_OPTIONS = LIRADS_ORDER;
 
@@ -134,8 +135,8 @@ export default function SecondReadingPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setPendingList(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setPendingErr(e?.message ?? "Bekleyen okumalar yuklenemedi");
+    } catch (e: unknown) {
+      setPendingErr(getErrorMessage(e));
     } finally {
       setPendingLoading(false);
     }
@@ -156,8 +157,8 @@ export default function SecondReadingPage() {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setCompletedList(Array.isArray(data) ? data : []);
-    } catch (e: any) {
-      setCompletedErr(e?.message ?? "Tamamlanan okumalar yuklenemedi");
+    } catch (e: unknown) {
+      setCompletedErr(getErrorMessage(e));
     } finally {
       setCompletedLoading(false);
     }
@@ -178,8 +179,8 @@ export default function SecondReadingPage() {
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setCaseData(await res.json());
-    } catch (e: any) {
-      setCaseErr(e?.message ?? "Vaka yuklenemedi");
+    } catch (e: unknown) {
+      setCaseErr(getErrorMessage(e));
     } finally {
       setCaseLoading(false);
     }
@@ -248,8 +249,8 @@ export default function SecondReadingPage() {
       setCaseData(null);
       fetchPending();
       fetchCompleted();
-    } catch (e: any) {
-      setSubmitErr(e?.message ?? "Gonderim hatasi");
+    } catch (e: unknown) {
+      setSubmitErr(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -294,8 +295,8 @@ export default function SecondReadingPage() {
       setAssignReader("");
       setAssignCategory("");
       fetchPending();
-    } catch (e: any) {
-      setAssignErr(e?.message ?? "Atama hatasi");
+    } catch (e: unknown) {
+      setAssignErr(getErrorMessage(e));
     } finally {
       setAssigning(false);
     }
