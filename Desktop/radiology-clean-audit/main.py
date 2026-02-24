@@ -65,8 +65,11 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 app = FastAPI(title="Radiology-Clean API", version="2.2.0", lifespan=lifespan)
 
-# Rate limiting
-limiter = Limiter(key_func=get_remote_address)
+# Rate limiting (test ortamında devre dışı)
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=not os.getenv("TESTING"),
+)
 app.state.limiter = limiter
 app.add_middleware(SlowAPIMiddleware)
 
