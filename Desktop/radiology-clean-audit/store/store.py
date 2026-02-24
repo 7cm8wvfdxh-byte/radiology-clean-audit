@@ -1,6 +1,9 @@
 import json
+import logging
 from db import SessionLocal, engine, Base
 from models import Case, CaseVersion
+
+logger = logging.getLogger(__name__)
 
 # tabloyu oluştur
 Base.metadata.create_all(bind=engine)
@@ -18,6 +21,7 @@ def save_case(case_id: str, audit_pack: dict, created_by: str = "", patient_id: 
             rec.created_at = generated_at or rec.created_at
             if patient_id:
                 rec.patient_id = patient_id
+            logger.info("Vaka guncellendi: %s (v%s, kullanici: %s)", case_id, version, created_by)
         else:
             rec = Case(
                 case_id=case_id,
@@ -27,6 +31,7 @@ def save_case(case_id: str, audit_pack: dict, created_by: str = "", patient_id: 
                 audit_pack_json=pack_json,
             )
             db.add(rec)
+            logger.info("Yeni vaka olusturuldu: %s (kullanici: %s)", case_id, created_by)
 
         # Versiyon geçmişine ekle
         ver = CaseVersion(
@@ -38,6 +43,10 @@ def save_case(case_id: str, audit_pack: dict, created_by: str = "", patient_id: 
         )
         db.add(ver)
         db.commit()
+    except Exception as exc:
+        logger.error("Vaka kaydedilemedi %s: %s", case_id, exc)
+        db.rollback()
+        raise
     finally:
         db.close()
 

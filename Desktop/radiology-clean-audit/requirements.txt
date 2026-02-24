@@ -1,18 +1,27 @@
-fastapi
-uvicorn
-pydantic
-reportlab
-qrcode
-python-multipart
-sqlalchemy
-python-dotenv
+# Core
+fastapi>=0.115.0,<1.0
+uvicorn>=0.32.0,<1.0
+pydantic>=2.10.0,<3.0
+
+# PDF & QR
+reportlab>=4.2,<5.0
+qrcode>=8.0,<9.0
+
+# Auth & Web
+python-multipart>=0.0.18,<1.0
+
+# Database
+sqlalchemy>=2.0.0,<3.0
+
+# Config
+python-dotenv>=1.0.0,<2.0
 
 # Radyolog Ajan
-anthropic
-pydicom
-Pillow
-numpy
+anthropic>=0.40.0,<1.0
+pydicom>=3.0.0,<4.0
+Pillow>=11.0.0,<12.0
+numpy>=2.0.0,<3.0
 
 # Test
-pytest
-httpx
+pytest>=8.0.0,<9.0
+httpx>=0.28.0,<1.0

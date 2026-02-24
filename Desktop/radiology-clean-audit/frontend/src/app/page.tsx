@@ -100,8 +100,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
           </CardContent>
         </Card>
         <p className="text-center text-xs text-zinc-400 mt-4">
-          Varsayılan: <span className="font-mono">admin</span> /{" "}
-          <span className="font-mono">admin123</span>
+          Radiology-Clean Audit v2.1
         </p>
       </div>
     </div>

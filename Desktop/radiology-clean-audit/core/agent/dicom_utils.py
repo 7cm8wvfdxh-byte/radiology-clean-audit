@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import base64
 import io
+import logging
 from typing import List
 
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 try:
     import pydicom
@@ -83,12 +86,14 @@ def extract_images_from_dicom(
         [{"base64": str, "series_description": str, "slice_info": str}, ...]
     """
     if not PYDICOM_AVAILABLE or not PIL_AVAILABLE:
+        logger.warning("DICOM isleme icin pydicom veya Pillow yuklu degil.")
         return []
 
     try:
         ds = pydicom.dcmread(io.BytesIO(file_bytes))
         pixel_array = ds.pixel_array
-    except Exception:
+    except Exception as exc:
+        logger.error("DICOM dosyasi okunamadi: %s", exc)
         return []
 
     series_desc = _get_series_description(ds)

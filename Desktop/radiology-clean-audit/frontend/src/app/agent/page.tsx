@@ -6,227 +6,29 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { getToken, clearToken } from "@/lib/auth";
+import { API_BASE } from "@/lib/constants";
+import type {
+  LabResult,
+  ChecklistItem,
+  ConfidenceData,
+  CriticalFinding,
+  Lesion,
+  BrainLesion,
+  SpineLesion,
+  ThoraxLesion,
+  PelvisLesion,
+  RegionType,
+  ClinicalForm,
+} from "@/types/agent";
+import {
+  emptyLesion,
+  emptyBrainLesion,
+  emptySpineLesion,
+  emptyThoraxLesion,
+  emptyPelvisLesion,
+} from "@/types/agent";
 
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-
-// ── Lab Result Tipi ──────────────────────────────────────────────────────────
-type LabResult = {
-  id?: number;
-  patient_id: string;
-  test_name: string;
-  value: string;
-  unit: string;
-  reference_range: string;
-  is_abnormal: string;
-  test_date: string;
-};
-
-// ── Checklist Tipi ───────────────────────────────────────────────────────────
-type ChecklistItem = { id: string; label: string; category: string };
-
-// ── Confidence Data Tipi ─────────────────────────────────────────────────────
-type ConfidenceData = {
-  overall_confidence: number;
-  diagnosis_confidence?: {
-    primary?: { diagnosis: string; confidence: number; reasoning: string };
-    alternatives?: { diagnosis: string; confidence: number; reasoning: string }[];
-  };
-  data_quality?: { score: number; limiting_factors?: string[] };
-  key_findings?: { finding: string; significance: string; supports: string }[];
-  critical_alert?: boolean;
-  critical_message?: string;
-};
-
-// ── Critical Finding Tipi ────────────────────────────────────────────────────
-type CriticalFinding = {
-  level: string;
-  code: string;
-  message: string;
-  action: string;
-};
-
-// ── Tipler ────────────────────────────────────────────────────────────────────
-
-type Lesion = {
-  location: string;
-  size_mm: string;
-  t1_signal: string;
-  t2_signal: string;
-  dwi_restriction: boolean;
-  arterial_enhancement: string;
-  washout: boolean;
-  capsule: boolean;
-  peripheral_washout: boolean;
-  delayed_central_enhancement: boolean;
-  infiltrative: boolean;
-  tumor_in_vein: boolean;
-  additional: string;
-};
-
-type BrainLesion = {
-  location: string;
-  size_mm: string;
-  t1_signal: string;
-  t2_flair_signal: string;
-  dwi_restriction: boolean;
-  enhancement: string;
-  perilesional_edema: boolean;
-  mass_effect: boolean;
-  hemorrhage: boolean;
-  necrosis: boolean;
-  calcification: boolean;
-  midline_shift: boolean;
-  additional: string;
-};
-
-type SpineLesion = {
-  location: string;
-  size_mm: string;
-  t1_signal: string;
-  t2_signal: string;
-  dwi_restriction: boolean;
-  enhancement: string;
-  cord_compression: boolean;
-  nerve_root_compression: boolean;
-  canal_stenosis: boolean;
-  vertebral_fracture: boolean;
-  additional: string;
-};
-
-type ThoraxLesion = {
-  location: string;
-  size_mm: string;
-  morphology: string;
-  density: string;
-  enhancement: string;
-  cavitation: boolean;
-  calcification: boolean;
-  spiculation: boolean;
-  pleural_contact: boolean;
-  lymphadenopathy: boolean;
-  additional: string;
-};
-
-type PelvisLesion = {
-  location: string;
-  size_mm: string;
-  t1_signal: string;
-  t2_signal: string;
-  dwi_restriction: boolean;
-  enhancement: string;
-  invasion: string;
-  lymph_nodes: boolean;
-  additional: string;
-};
-
-type RegionType = "abdomen" | "brain" | "both" | "spine" | "thorax" | "pelvis";
-
-type ClinicalForm = {
-  region: RegionType;
-  age: string;
-  gender: string;
-  indication: string;
-  contrast: boolean;
-  contrast_agent: string;
-  risk_factors: string;
-  notes: string;
-  cirrhosis: boolean;
-  // MRI sequences available
-  sequences: string[];
-  // Abdomen findings
-  liver_parenchyma: string;
-  lesions: Lesion[];
-  other_organs: string;
-  vascular: string;
-  // Brain findings
-  brain_general: string;
-  brain_lesions: BrainLesion[];
-  brain_other: string;
-  // Spine findings
-  spine_general: string;
-  spine_lesions: SpineLesion[];
-  spine_other: string;
-  // Thorax findings
-  thorax_general: string;
-  thorax_lesions: ThoraxLesion[];
-  thorax_other: string;
-  // Pelvis findings
-  pelvis_general: string;
-  pelvis_lesions: PelvisLesion[];
-  pelvis_other: string;
-};
-
-const emptyLesion: Lesion = {
-  location: "",
-  size_mm: "",
-  t1_signal: "",
-  t2_signal: "",
-  dwi_restriction: false,
-  arterial_enhancement: "",
-  washout: false,
-  capsule: false,
-  peripheral_washout: false,
-  delayed_central_enhancement: false,
-  infiltrative: false,
-  tumor_in_vein: false,
-  additional: "",
-};
-
-const emptyBrainLesion: BrainLesion = {
-  location: "",
-  size_mm: "",
-  t1_signal: "",
-  t2_flair_signal: "",
-  dwi_restriction: false,
-  enhancement: "",
-  perilesional_edema: false,
-  mass_effect: false,
-  hemorrhage: false,
-  necrosis: false,
-  calcification: false,
-  midline_shift: false,
-  additional: "",
-};
-
-const emptySpineLesion: SpineLesion = {
-  location: "",
-  size_mm: "",
-  t1_signal: "",
-  t2_signal: "",
-  dwi_restriction: false,
-  enhancement: "",
-  cord_compression: false,
-  nerve_root_compression: false,
-  canal_stenosis: false,
-  vertebral_fracture: false,
-  additional: "",
-};
-
-const emptyThoraxLesion: ThoraxLesion = {
-  location: "",
-  size_mm: "",
-  morphology: "",
-  density: "",
-  enhancement: "",
-  cavitation: false,
-  calcification: false,
-  spiculation: false,
-  pleural_contact: false,
-  lymphadenopathy: false,
-  additional: "",
-};
-
-const emptyPelvisLesion: PelvisLesion = {
-  location: "",
-  size_mm: "",
-  t1_signal: "",
-  t2_signal: "",
-  dwi_restriction: false,
-  enhancement: "",
-  invasion: "",
-  lymph_nodes: false,
-  additional: "",
-};
+const API = API_BASE;
 
 const defaultForm: ClinicalForm = {
   region: "abdomen",

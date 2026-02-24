@@ -14,9 +14,12 @@ from __future__ import annotations
 
 import os
 import json
+import logging
 from typing import AsyncGenerator, List
 
 import anthropic
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Radyolog System Prompt
@@ -1180,8 +1183,10 @@ async def stream_radiologist_analysis(
             async for chunk in stream.text_stream:
                 yield chunk
     except anthropic.APIError as exc:
+        logger.error("Claude API hatasi: %s", exc)
         yield f"\n\n[API HATASI] {exc}"
     except Exception as exc:
+        logger.error("Radyolog ajan hatasi: %s", exc, exc_info=True)
         yield f"\n\n[HATA] {exc}"
 
 
@@ -1216,6 +1221,8 @@ async def stream_followup(
             async for chunk in stream.text_stream:
                 yield chunk
     except anthropic.APIError as exc:
+        logger.error("Followup API hatasi: %s", exc)
         yield f"\n\n[API HATASI] {exc}"
     except Exception as exc:
+        logger.error("Followup hatasi: %s", exc, exc_info=True)
         yield f"\n\n[HATA] {exc}"

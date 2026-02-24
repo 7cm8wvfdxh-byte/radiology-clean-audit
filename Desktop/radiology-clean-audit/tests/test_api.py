@@ -67,19 +67,20 @@ class TestAuth:
         )
         assert res.status_code == 401
 
-    def test_me_endpoint(self, auth_headers):
-        res = client.get("/auth/me", headers=auth_headers)
+    def test_me_endpoint_returns_username(self):
+        """Token ile /auth/me endpoint'inin username döndüğünü doğrula."""
+        login = client.post(
+            "/auth/token",
+            data={"username": "testadmin", "password": "testpass123"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+        )
+        token = login.json()["access_token"]
+        res = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 200
         assert res.json()["username"] == "testadmin"
 
-    def test_protected_route_without_token(self):
-        res = client.get("/cases")
-        assert res.status_code == 401
-
-    # auth_headers fixture'ı class testlerinde parametre olarak çalışmaz direkt,
-    # module fixture kullanıyoruz - bu test fixture ile çağrılıyor
-    def test_me_endpoint(self):
-        # Token alalım
+    def test_me_endpoint_returns_role(self):
+        """Token ile /auth/me endpoint'inin admin rolü döndüğünü doğrula."""
         login = client.post(
             "/auth/token",
             data={"username": "testadmin", "password": "testpass123"},
@@ -89,6 +90,15 @@ class TestAuth:
         res = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
         assert res.status_code == 200
         assert res.json()["role"] == "admin"
+
+    def test_protected_route_without_token(self):
+        res = client.get("/cases")
+        assert res.status_code == 401
+
+    def test_invalid_token_rejected(self):
+        """Geçersiz token'ın reddedildiğini doğrula."""
+        res = client.get("/auth/me", headers={"Authorization": "Bearer invalid.token.here"})
+        assert res.status_code == 401
 
 
 class TestAnalyze:

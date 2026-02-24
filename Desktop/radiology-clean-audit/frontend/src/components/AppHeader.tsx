@@ -39,7 +39,7 @@ export default function AppHeader() {
 
   function logout() {
     clearToken();
-    router.replace("/login");
+    router.replace("/");
   }
 
   if (pathname === "/login" || pathname === "/") return null;

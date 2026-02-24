@@ -3,7 +3,19 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib.colors import HexColor
-import qrcode, os, json
+import qrcode, os, json, re, logging, tempfile
+
+logger = logging.getLogger(__name__)
+
+# Güvenli output dizini
+OUTPUT_DIR = os.path.join(tempfile.gettempdir(), "radiology_exports")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+
+def _sanitize_filename(name: str) -> str:
+    """Dosya adından tehlikeli karakterleri temizler (path traversal önlemi)."""
+    safe = re.sub(r'[^a-zA-Z0-9_\-]', '_', os.path.basename(name))
+    return safe or "unknown"
 
 
 def _lirads_color(category: str) -> str:
@@ -44,7 +56,8 @@ def generate_pdf(pack):
         textColor=HexColor("#a1a1aa"),
     ))
 
-    path = f"{pack['case_id']}.pdf"
+    safe_id = _sanitize_filename(pack['case_id'])
+    path = os.path.join(OUTPUT_DIR, f"{safe_id}.pdf")
     doc = SimpleDocTemplate(path, pagesize=A4)
     el = []
 
@@ -149,7 +162,7 @@ def generate_pdf(pack):
 
     # QR kod
     qr = qrcode.make(pack["verify_url"])
-    qpath = f"qr_{pack['case_id']}.png"
+    qpath = os.path.join(OUTPUT_DIR, f"qr_{safe_id}.png")
     qr.save(qpath)
     el.append(Image(qpath, 1.5 * inch, 1.5 * inch))
     el.append(Paragraph(pack["verify_url"], styles["Meta"]))
@@ -164,5 +177,8 @@ def generate_pdf(pack):
     ))
 
     doc.build(el)
-    os.remove(qpath)
+    try:
+        os.remove(qpath)
+    except OSError:
+        logger.warning("QR temp dosyası silinemedi: %s", qpath)
     return path

@@ -1,12 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-const backend = process.env.NEXT_PUBLIC_API_BASE!;
+const BACKEND = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
-export async function GET() {
-  const res = await fetch(`${backend}/cases`, { cache: "no-store" });
-  const text = await res.text();
-  return new NextResponse(text, {
-    status: res.status,
-    headers: { "content-type": res.headers.get("content-type") || "application/json" },
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) {
+    return NextResponse.json({ error: "Authorization header required" }, { status: 401 });
+  }
+
+  const res = await fetch(`${BACKEND}/cases`, {
+    headers: { Authorization: authHeader },
+    cache: "no-store",
   });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }

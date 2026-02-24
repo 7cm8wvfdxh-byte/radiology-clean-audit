@@ -3,6 +3,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -12,6 +13,8 @@ import secrets
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 
 class JWTError(Exception):
@@ -63,7 +66,15 @@ def _jwt_decode(token: str, secret: str) -> dict:
     except Exception as e:
         raise JWTError(str(e)) from e
 
-SECRET_KEY = os.getenv("JWT_SECRET", "CHANGE_ME_JWT_SECRET")
+_jwt_secret_raw = os.getenv("JWT_SECRET", "")
+if not _jwt_secret_raw or _jwt_secret_raw in ("CHANGE_ME_JWT_SECRET", "CHANGE_ME_STRONG_JWT_SECRET_HERE"):
+    logger.warning(
+        "JWT_SECRET ortam değişkeni tanımlı değil veya varsayılan bırakılmış! "
+        "Production ortamında güçlü bir secret kullanın."
+    )
+    _jwt_secret_raw = _jwt_secret_raw or "DEV_ONLY_FALLBACK_SECRET"
+
+SECRET_KEY = _jwt_secret_raw
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
 
@@ -104,7 +115,8 @@ def verify_password(plain: str, hashed: str) -> bool:
         iters = int(iters_str)
         dk = hashlib.pbkdf2_hmac(_HASH_ALG, plain.encode(), salt.encode(), iters)
         return hmac.compare_digest(dk.hex(), stored_hex)
-    except Exception:
+    except Exception as exc:
+        logger.error("Şifre doğrulama hatası: %s", exc)
         return False
 
 

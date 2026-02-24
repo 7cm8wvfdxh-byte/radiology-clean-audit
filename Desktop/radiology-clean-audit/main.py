@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
@@ -9,6 +10,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
+
+# ---------------------------------------------------------------------------
+# Logging yapılandırması
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("radiology-clean")
 
 from core.export.audit_pack import build_pack, build_agent_pack, verify_pack_full
 from core.export.pdf_export import generate_pdf
@@ -35,14 +46,17 @@ from core.critical_findings import detect_critical_findings, get_checklist
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    logger.info("Uygulama başlatılıyor...")
     ensure_default_admin()
+    logger.info("Varsayılan admin kontrol edildi.")
     yield
+    logger.info("Uygulama kapatılıyor.")
 
 
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
-app = FastAPI(title="Radiology-Clean API", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Radiology-Clean API", version="2.1.0", lifespan=lifespan)
 
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
@@ -53,7 +67,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -112,7 +126,7 @@ def me(user: UserInToken = Depends(get_current_user)):
 # ---------------------------------------------------------------------------
 @app.get("/", tags=["health"])
 def root():
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "2.1.0"}
 
 
 # ---------------------------------------------------------------------------

@@ -1,7 +1,17 @@
-import os, json, hmac, hashlib, datetime
+import os, json, hmac, hashlib, datetime, logging
 from typing import Optional
 
-AUDIT_SECRET = os.getenv("AUDIT_SECRET", "CHANGE_ME_SECRET")
+logger = logging.getLogger(__name__)
+
+_audit_secret_raw = os.getenv("AUDIT_SECRET", "")
+if not _audit_secret_raw or _audit_secret_raw in ("CHANGE_ME_SECRET", "CHANGE_ME_STRONG_SECRET_HERE"):
+    logger.warning(
+        "AUDIT_SECRET ortam değişkeni tanımlı değil veya varsayılan bırakılmış! "
+        "Production ortamında güçlü bir secret kullanın."
+    )
+    _audit_secret_raw = _audit_secret_raw or "DEV_ONLY_AUDIT_FALLBACK"
+
+AUDIT_SECRET = _audit_secret_raw
 
 def _now_iso():
     return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"

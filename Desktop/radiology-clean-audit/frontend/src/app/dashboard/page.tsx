@@ -5,30 +5,11 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import LiradsBadge from "@/components/LiradsBadge";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
+import { API_BASE, LIRADS_ORDER } from "@/lib/constants";
 
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-
-const LIRADS_COLORS: Record<string, string> = {
-  "LR-1": "bg-green-100 text-green-800 border-green-300",
-  "LR-2": "bg-green-50 text-green-700 border-green-200",
-  "LR-3": "bg-yellow-50 text-yellow-800 border-yellow-300",
-  "LR-4": "bg-orange-50 text-orange-800 border-orange-300",
-  "LR-5": "bg-red-50 text-red-800 border-red-300",
-  "LR-M": "bg-purple-50 text-purple-800 border-purple-300",
-  "LR-TIV": "bg-red-100 text-red-900 border-red-400",
-};
-
-const LIRADS_ORDER = ["LR-1", "LR-2", "LR-3", "LR-4", "LR-5", "LR-M", "LR-TIV"];
-
-function LiradsBadge({ category }: { category: string }) {
-  const color = LIRADS_COLORS[category] || "bg-zinc-100 text-zinc-800 border-zinc-300";
-  return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}>
-      {category}
-    </span>
-  );
-}
+const API = API_BASE;
 
 type Stats = {
   total_cases: number;

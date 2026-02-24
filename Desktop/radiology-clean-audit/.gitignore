@@ -2,13 +2,36 @@
 __pycache__/
 *.py[cod]
 *.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
 
-# Veritabanı (geliştirme)
+# Veritabani (gelistirme)
 *.db
 
-# Ortam değişkenleri
+# Ortam degiskenleri
 .env
+.env.local
+.env.*.local
 
-# PDF ve QR geçici dosyaları
+# PDF ve QR gecici dosyalari
 *.pdf
-qr.png
+qr_*.png
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Log dosyalari
+*.log
