@@ -556,7 +556,7 @@ export function PriorCasesPanel({
                     "bg-zinc-100 text-zinc-700"
                   }`}>{lirads.category}</span>
                 )}
-                {dsl.lesion_size_mm > 0 && (
+                {(dsl.lesion_size_mm ?? 0) > 0 && (
                   <span className="text-zinc-400 ml-2">{dsl.lesion_size_mm} mm</span>
                 )}
               </div>
