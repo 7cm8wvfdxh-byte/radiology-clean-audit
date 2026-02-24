@@ -1,13 +1,14 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import Breadcrumb from "@/components/Breadcrumb";
+import { SkeletonCard } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
-
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+import { API_BASE } from "@/lib/constants";
 
 type CaseItem = {
   case_id: string;
@@ -25,7 +26,7 @@ type PatientDetail = {
 };
 
 const genderLabel = (g?: string) =>
-  g === "M" ? "Erkek" : g === "F" ? "Kadın" : "Belirtilmemiş";
+  g === "M" ? "Erkek" : g === "F" ? "Kadin" : "Belirtilmemis";
 
 export default function PatientDetailPage({
   params,
@@ -34,7 +35,7 @@ export default function PatientDetailPage({
 }) {
   const router = useRouter();
   const { patient_id } = use(params);
-  const patientId = decodeURIComponent(patient_id);
+  const patientId = useMemo(() => decodeURIComponent(patient_id), [patient_id]);
 
   const [data, setData] = useState<PatientDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,7 +50,7 @@ export default function PatientDetailPage({
         setErr(null);
         setLoading(true);
         const res = await fetch(
-          `${API}/patients/${encodeURIComponent(patientId)}`,
+          `${API_BASE}/patients/${encodeURIComponent(patientId)}`,
           { headers: authHeaders() }
         );
         if (res.status === 401) { clearToken(); router.replace("/"); return; }
@@ -57,7 +58,7 @@ export default function PatientDetailPage({
         const json = await res.json();
         setData(json);
       } catch (e: any) {
-        setErr(e?.message ?? "Yükleme hatası");
+        setErr(e?.message ?? "Yukleme hatasi");
       } finally {
         setLoading(false);
       }
@@ -66,18 +67,20 @@ export default function PatientDetailPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Link href="/patients" className="text-sm text-zinc-600 hover:underline">
-          ← Hastalar
-        </Link>
-        <span className="text-zinc-300">/</span>
-        <span className="text-sm font-medium">{patientId}</span>
-      </div>
+      <Breadcrumb items={[
+        { label: "Ana Sayfa", href: "/" },
+        { label: "Hastalar", href: "/patients" },
+        { label: patientId },
+      ]} />
 
-      {loading && <div className="text-sm text-zinc-500">Yükleniyor…</div>}
-      {err && <div className="text-sm text-red-600">Hata: {err}</div>}
+      {loading && <><SkeletonCard /><SkeletonCard /></>}
+      {err && (
+        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+          Hata: {err}
+        </div>
+      )}
 
-      {data && (
+      {!loading && !err && data && (
         <>
           <Card>
             <CardHeader>
@@ -86,20 +89,20 @@ export default function PatientDetailPage({
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-zinc-500">Hasta ID</div>
-                  <div className="font-medium font-mono">{data.patient_id}</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">Hasta ID</div>
+                  <div className="font-medium font-mono dark:text-zinc-100">{data.patient_id}</div>
                 </div>
                 <div>
-                  <div className="text-zinc-500">Cinsiyet</div>
-                  <div className="font-medium">{genderLabel(data.gender)}</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">Cinsiyet</div>
+                  <div className="font-medium dark:text-zinc-100">{genderLabel(data.gender)}</div>
                 </div>
                 <div>
-                  <div className="text-zinc-500">Doğum Tarihi</div>
-                  <div className="font-medium">{data.birth_date ?? "-"}</div>
+                  <div className="text-zinc-500 dark:text-zinc-400">Dogum Tarihi</div>
+                  <div className="font-medium dark:text-zinc-100">{data.birth_date ?? "-"}</div>
                 </div>
                 <div>
-                  <div className="text-zinc-500">Kayıt Tarihi</div>
-                  <div className="font-medium">
+                  <div className="text-zinc-500 dark:text-zinc-400">Kayit Tarihi</div>
+                  <div className="font-medium dark:text-zinc-100">
                     {data.created_at
                       ? new Date(data.created_at).toLocaleDateString("tr-TR")
                       : "-"}
@@ -120,19 +123,19 @@ export default function PatientDetailPage({
             </CardHeader>
             <CardContent>
               {data.cases.length === 0 ? (
-                <div className="text-sm text-zinc-500">
+                <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">
                   Bu hastaya ait vaka yok.
                 </div>
               ) : (
-                <ul className="divide-y divide-zinc-200">
+                <ul className="divide-y divide-zinc-200 dark:divide-zinc-700">
                   {data.cases.map((c) => (
                     <li
                       key={c.case_id}
                       className="py-3 flex items-center justify-between"
                     >
                       <div>
-                        <div className="font-medium">{c.case_id}</div>
-                        <div className="text-sm text-zinc-500">
+                        <div className="font-medium dark:text-zinc-100">{c.case_id}</div>
+                        <div className="text-sm text-zinc-500 dark:text-zinc-400">
                           {c.decision ?? "-"}
                           {c.created_at
                             ? ` · ${new Date(c.created_at).toLocaleDateString("tr-TR")}`
@@ -140,7 +143,7 @@ export default function PatientDetailPage({
                         </div>
                       </div>
                       <Link href={`/cases/${encodeURIComponent(c.case_id)}`}>
-                        <Button variant="secondary">Aç</Button>
+                        <Button variant="secondary">Ac</Button>
                       </Link>
                     </li>
                   ))}

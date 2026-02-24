@@ -2,24 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import LiradsBadge from "@/components/LiradsBadge";
+import Breadcrumb from "@/components/Breadcrumb";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
+import { SkeletonList } from "@/components/Skeleton";
+import { FormField, Input, Select, Textarea } from "@/components/ui/FormField";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
+import { API_BASE, LIRADS_ORDER } from "@/lib/constants";
 
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-
-const LIRADS_COLORS: Record<string, string> = {
-  "LR-1": "bg-green-100 text-green-800 border-green-300",
-  "LR-2": "bg-green-50 text-green-700 border-green-200",
-  "LR-3": "bg-yellow-50 text-yellow-800 border-yellow-300",
-  "LR-4": "bg-orange-50 text-orange-800 border-orange-300",
-  "LR-5": "bg-red-50 text-red-800 border-red-300",
-  "LR-M": "bg-purple-50 text-purple-800 border-purple-300",
-  "LR-TIV": "bg-red-100 text-red-900 border-red-400",
-};
-
-const LIRADS_OPTIONS = ["LR-1", "LR-2", "LR-3", "LR-4", "LR-5", "LR-M", "LR-TIV"];
+const LIRADS_OPTIONS = LIRADS_ORDER;
 
 const AGREEMENT_COLORS: Record<string, string> = {
   agree: "bg-green-100 text-green-800",
@@ -65,17 +58,6 @@ type CaseData = {
 
 /* ---------- Helper Components ---------- */
 
-function LiradsBadge({ category }: { category: string }) {
-  const color = LIRADS_COLORS[category] || "bg-zinc-100 text-zinc-800 border-zinc-300";
-  return (
-    <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border ${color}`}
-    >
-      {category}
-    </span>
-  );
-}
-
 function AgreementBadge({ agreement }: { agreement: string }) {
   const color = AGREEMENT_COLORS[agreement] || "bg-zinc-100 text-zinc-800";
   const label = AGREEMENT_LABELS[agreement] || agreement;
@@ -84,65 +66,6 @@ function AgreementBadge({ agreement }: { agreement: string }) {
       {label}
     </span>
   );
-}
-
-/** Render basic markdown: headings, bold, italic, lists, line breaks */
-function renderMarkdown(text: string) {
-  const lines = text.split("\n");
-  const elements: React.ReactNode[] = [];
-
-  lines.forEach((line, i) => {
-    if (line.startsWith("### ")) {
-      elements.push(
-        <h3 key={i} className="text-sm font-bold mt-3 mb-1 text-zinc-800">
-          {line.slice(4)}
-        </h3>
-      );
-    } else if (line.startsWith("## ")) {
-      elements.push(
-        <h2 key={i} className="text-base font-bold mt-4 mb-1 text-zinc-900">
-          {line.slice(3)}
-        </h2>
-      );
-    } else if (line.startsWith("# ")) {
-      elements.push(
-        <h1 key={i} className="text-lg font-bold mt-4 mb-1 text-zinc-900">
-          {line.slice(2)}
-        </h1>
-      );
-    } else if (line.startsWith("- ") || line.startsWith("* ")) {
-      elements.push(
-        <li key={i} className="ml-4 text-sm text-zinc-700 list-disc">
-          {line.slice(2)}
-        </li>
-      );
-    } else if (line.trim() === "") {
-      elements.push(<br key={i} />);
-    } else {
-      // Handle inline **bold** and *italic*
-      const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
-      const rendered = parts.map((part, j) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return (
-            <strong key={j} className="font-semibold">
-              {part.slice(2, -2)}
-            </strong>
-          );
-        }
-        if (part.startsWith("*") && part.endsWith("*")) {
-          return <em key={j}>{part.slice(1, -1)}</em>;
-        }
-        return part;
-      });
-      elements.push(
-        <p key={i} className="text-sm text-zinc-700 leading-relaxed">
-          {rendered}
-        </p>
-      );
-    }
-  });
-
-  return <div className="space-y-0.5">{elements}</div>;
 }
 
 /* ---------- Main Page ---------- */
@@ -200,7 +123,7 @@ export default function SecondReadingPage() {
     try {
       setPendingLoading(true);
       setPendingErr(null);
-      const res = await fetch(`${API}/second-readings?status=pending`, {
+      const res = await fetch(`${API_BASE}/second-readings?status=pending`, {
         headers: authHeaders(),
       });
       if (res.status === 401) {
@@ -222,7 +145,7 @@ export default function SecondReadingPage() {
     try {
       setCompletedLoading(true);
       setCompletedErr(null);
-      const res = await fetch(`${API}/second-readings?status=completed`, {
+      const res = await fetch(`${API_BASE}/second-readings?status=completed`, {
         headers: authHeaders(),
       });
       if (res.status === 401) {
@@ -245,7 +168,7 @@ export default function SecondReadingPage() {
       setCaseLoading(true);
       setCaseErr(null);
       setCaseData(null);
-      const res = await fetch(`${API}/cases/${encodeURIComponent(caseId)}`, {
+      const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(caseId)}`, {
         headers: authHeaders(),
       });
       if (res.status === 401) {
@@ -301,7 +224,7 @@ export default function SecondReadingPage() {
       if (secondCategory) body.second_category = secondCategory;
       if (comments.trim()) body.comments = comments.trim();
 
-      const res = await fetch(`${API}/second-readings/${selected.id}/complete`, {
+      const res = await fetch(`${API_BASE}/second-readings/${selected.id}/complete`, {
         method: "POST",
         headers: {
           ...authHeaders(),
@@ -323,7 +246,6 @@ export default function SecondReadingPage() {
       setSubmitOk(true);
       setSelected(null);
       setCaseData(null);
-      // Refresh both lists
       fetchPending();
       fetchCompleted();
     } catch (e: any) {
@@ -344,7 +266,7 @@ export default function SecondReadingPage() {
       setAssignErr(null);
       setAssignOk(false);
 
-      const res = await fetch(`${API}/second-readings`, {
+      const res = await fetch(`${API_BASE}/second-readings`, {
         method: "POST",
         headers: {
           ...authHeaders(),
@@ -371,7 +293,6 @@ export default function SecondReadingPage() {
       setAssignCaseId("");
       setAssignReader("");
       setAssignCategory("");
-      // Refresh pending list
       fetchPending();
     } catch (e: any) {
       setAssignErr(e?.message ?? "Atama hatasi");
@@ -386,34 +307,30 @@ export default function SecondReadingPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Link href="/" className="text-sm text-zinc-600 hover:underline">
-          &larr; Ana Sayfa
-        </Link>
-        <h1 className="text-xl font-semibold mt-1">Ikinci Okuma Akisi</h1>
-        <p className="text-sm text-zinc-500">
+        <Breadcrumb items={[{ label: "Ana Sayfa", href: "/" }, { label: "Ikinci Okuma" }]} />
+        <h1 className="text-xl font-semibold mt-2 dark:text-zinc-100">Ikinci Okuma Akisi</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Kalite guvencesi icin ikinci radyolog degerlendirmesi
         </p>
       </div>
 
-      {/* ================================================ */}
-      {/* Section 1: Pending Reviews List                   */}
-      {/* ================================================ */}
+      {/* Section 1: Pending Reviews List */}
       <Card>
         <CardHeader>
           <CardTitle>Bekleyen Degerlendirmeler</CardTitle>
         </CardHeader>
         <CardContent>
-          {pendingLoading && (
-            <div className="text-sm text-zinc-500">Yukleniyor...</div>
-          )}
+          {pendingLoading && <SkeletonList rows={3} />}
           {pendingErr && (
-            <div className="text-sm text-red-600">Hata: {pendingErr}</div>
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+              Hata: {pendingErr}
+            </div>
           )}
           {!pendingLoading && !pendingErr && pendingList.length === 0 && (
-            <div className="text-sm text-zinc-500">Bekleyen degerlendirme yok</div>
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">Bekleyen degerlendirme yok</div>
           )}
           {!pendingLoading && !pendingErr && pendingList.length > 0 && (
-            <ul className="divide-y divide-zinc-200">
+            <ul className="divide-y divide-zinc-200 dark:divide-zinc-700">
               {pendingList.map((item) => (
                 <li
                   key={item.id}
@@ -422,10 +339,10 @@ export default function SecondReadingPage() {
                   <div className="flex items-center gap-3">
                     <LiradsBadge category={item.original_category} />
                     <div>
-                      <div className="text-sm font-medium text-zinc-800">
+                      <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                         {item.case_id}
                       </div>
-                      <div className="text-xs text-zinc-500">
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
                         Okuyucu: {item.reader_username} &middot;{" "}
                         {item.created_at?.slice(0, 10)}
                       </div>
@@ -446,12 +363,10 @@ export default function SecondReadingPage() {
         </CardContent>
       </Card>
 
-      {/* ================================================ */}
       {/* Section 2: Review Form (when a reading selected) */}
-      {/* ================================================ */}
       {selected && (
-        <Card className="border-blue-200">
-          <CardHeader className="bg-blue-50/50">
+        <Card className="border-blue-200 dark:border-blue-800">
+          <CardHeader className="bg-blue-50/50 dark:bg-blue-900/10">
             <div className="flex items-center justify-between">
               <CardTitle>
                 Degerlendirme: {selected.case_id}
@@ -468,28 +383,26 @@ export default function SecondReadingPage() {
           <CardContent className="space-y-6">
             {/* Case details */}
             {caseLoading && (
-              <div className="text-sm text-zinc-500">Vaka yukeniyor...</div>
+              <div className="text-sm text-zinc-500 dark:text-zinc-400" role="status">Vaka yukleniyor...</div>
             )}
             {caseErr && (
-              <div className="text-sm text-red-600">Hata: {caseErr}</div>
+              <div className="text-sm text-red-600 dark:text-red-400" role="alert">Hata: {caseErr}</div>
             )}
 
             {caseData && (
               <>
-                {/* Original category badge */}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-zinc-500">Orijinal Kategori:</span>
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">Orijinal Kategori:</span>
                   <LiradsBadge category={selected.original_category} />
                 </div>
 
-                {/* Original report */}
                 {caseData.content?.agent_report && (
                   <div>
-                    <div className="text-sm font-medium text-zinc-700 mb-2">
+                    <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                       Orijinal Rapor
                     </div>
-                    <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-4 max-h-96 overflow-y-auto">
-                      {renderMarkdown(caseData.content.agent_report)}
+                    <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                      <MarkdownRenderer text={caseData.content.agent_report} />
                     </div>
                   </div>
                 )}
@@ -497,34 +410,23 @@ export default function SecondReadingPage() {
             )}
 
             {/* Review form fields */}
-            <div className="space-y-4 pt-2 border-t border-zinc-200">
-              {/* Agreement */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Degerlendirme
-                </label>
-                <select
+            <div className="space-y-4 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+              <FormField label="Degerlendirme" required>
+                <Select
                   value={agreement}
                   onChange={(e) => setAgreement(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
                 >
                   <option value="">-- Seciniz --</option>
                   <option value="agree">Katiliyorum</option>
                   <option value="disagree">Katilmiyorum</option>
                   <option value="partial">Kismen Katiliyorum</option>
-                </select>
-              </div>
+                </Select>
+              </FormField>
 
-              {/* Second reader LI-RADS category */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Ikinci Okuyucu LI-RADS Kategorisi{" "}
-                  <span className="text-zinc-400 font-normal">(opsiyonel)</span>
-                </label>
-                <select
+              <FormField label="Ikinci Okuyucu LI-RADS Kategorisi" hint="Opsiyonel">
+                <Select
                   value={secondCategory}
                   onChange={(e) => setSecondCategory(e.target.value)}
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
                 >
                   <option value="">-- Seciniz --</option>
                   {LIRADS_OPTIONS.map((cat) => (
@@ -532,29 +434,25 @@ export default function SecondReadingPage() {
                       {cat}
                     </option>
                   ))}
-                </select>
-              </div>
+                </Select>
+              </FormField>
 
-              {/* Comments */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Yorumlar
-                </label>
-                <textarea
+              <FormField label="Yorumlar">
+                <Textarea
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   rows={4}
                   placeholder="Degerlendirme notlarinizi yaziniz..."
-                  className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 resize-y"
                 />
-              </div>
+              </FormField>
 
-              {/* Submit */}
               {submitErr && (
-                <div className="text-sm text-red-600">Hata: {submitErr}</div>
+                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+                  Hata: {submitErr}
+                </div>
               )}
               {submitOk && (
-                <div className="text-sm text-green-600">
+                <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2" role="status">
                   Degerlendirme basariyla gonderildi!
                 </div>
               )}
@@ -569,52 +467,35 @@ export default function SecondReadingPage() {
         </Card>
       )}
 
-      {/* ================================================ */}
-      {/* Section 3: Assignment Form (admin)               */}
-      {/* ================================================ */}
+      {/* Section 3: Assignment Form (admin) */}
       <Card>
         <CardHeader>
           <CardTitle>Yeni Ikinci Okuma Atama</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Case ID */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Vaka ID
-              </label>
-              <input
+            <FormField label="Vaka ID" required>
+              <Input
                 type="text"
                 value={assignCaseId}
                 onChange={(e) => setAssignCaseId(e.target.value)}
                 placeholder="orn. CASE1001"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
               />
-            </div>
+            </FormField>
 
-            {/* Reader username */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Okuyucu Kullanici Adi
-              </label>
-              <input
+            <FormField label="Okuyucu Kullanici Adi" required>
+              <Input
                 type="text"
                 value={assignReader}
                 onChange={(e) => setAssignReader(e.target.value)}
                 placeholder="orn. dr_mehmet"
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
               />
-            </div>
+            </FormField>
 
-            {/* Original category */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Orijinal Kategori
-              </label>
-              <select
+            <FormField label="Orijinal Kategori" required>
+              <Select
                 value={assignCategory}
                 onChange={(e) => setAssignCategory(e.target.value)}
-                className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
               >
                 <option value="">-- Seciniz --</option>
                 {LIRADS_OPTIONS.map((cat) => (
@@ -622,15 +503,17 @@ export default function SecondReadingPage() {
                     {cat}
                   </option>
                 ))}
-              </select>
-            </div>
+              </Select>
+            </FormField>
           </div>
 
           {assignErr && (
-            <div className="text-sm text-red-600">Hata: {assignErr}</div>
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+              Hata: {assignErr}
+            </div>
           )}
           {assignOk && (
-            <div className="text-sm text-green-600">
+            <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2" role="status">
               Ikinci okuma basariyla atandi!
             </div>
           )}
@@ -640,44 +523,42 @@ export default function SecondReadingPage() {
         </CardContent>
       </Card>
 
-      {/* ================================================ */}
-      {/* Section 4: Completed Reviews History             */}
-      {/* ================================================ */}
+      {/* Section 4: Completed Reviews History */}
       <Card>
         <CardHeader>
           <CardTitle>Tamamlanan Degerlendirmeler</CardTitle>
         </CardHeader>
         <CardContent>
-          {completedLoading && (
-            <div className="text-sm text-zinc-500">Yukleniyor...</div>
-          )}
+          {completedLoading && <SkeletonList rows={3} />}
           {completedErr && (
-            <div className="text-sm text-red-600">Hata: {completedErr}</div>
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+              Hata: {completedErr}
+            </div>
           )}
           {!completedLoading && !completedErr && completedList.length === 0 && (
-            <div className="text-sm text-zinc-500">Henuz tamamlanan degerlendirme yok</div>
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">Henuz tamamlanan degerlendirme yok</div>
           )}
           {!completedLoading && !completedErr && completedList.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-zinc-200 text-left">
-                    <th className="py-2 pr-3 font-medium text-zinc-600">Vaka ID</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600">Okuyucu</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600">Degerlendirme</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600">Orijinal</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600">Ikinci Kategori</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600">Yorumlar</th>
-                    <th className="py-2 font-medium text-zinc-600">Tamamlanma</th>
+                  <tr className="border-b border-zinc-200 dark:border-zinc-700 text-left">
+                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Vaka ID</th>
+                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Okuyucu</th>
+                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Degerlendirme</th>
+                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Orijinal</th>
+                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Ikinci Kategori</th>
+                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Yorumlar</th>
+                    <th className="py-2 font-medium text-zinc-600 dark:text-zinc-400">Tamamlanma</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {completedList.map((item) => (
-                    <tr key={item.id} className="hover:bg-zinc-50">
-                      <td className="py-2.5 pr-3 font-medium text-zinc-800">
+                    <tr key={item.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
+                      <td className="py-2.5 pr-3 font-medium text-zinc-800 dark:text-zinc-200">
                         {item.case_id}
                       </td>
-                      <td className="py-2.5 pr-3 text-zinc-600">
+                      <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
                         {item.reader_username}
                       </td>
                       <td className="py-2.5 pr-3">
@@ -690,13 +571,13 @@ export default function SecondReadingPage() {
                         {item.second_category ? (
                           <LiradsBadge category={item.second_category} />
                         ) : (
-                          <span className="text-zinc-400">-</span>
+                          <span className="text-zinc-400 dark:text-zinc-500">-</span>
                         )}
                       </td>
-                      <td className="py-2.5 pr-3 text-zinc-600 max-w-xs truncate">
-                        {item.comments || <span className="text-zinc-400">-</span>}
+                      <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
+                        {item.comments || <span className="text-zinc-400 dark:text-zinc-500">-</span>}
                       </td>
-                      <td className="py-2.5 text-zinc-500 text-xs">
+                      <td className="py-2.5 text-zinc-500 dark:text-zinc-400 text-xs">
                         {item.completed_at?.slice(0, 10)}
                       </td>
                     </tr>

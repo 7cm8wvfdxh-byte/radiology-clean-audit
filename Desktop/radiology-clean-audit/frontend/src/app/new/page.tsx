@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { FormField, Input } from "@/components/ui/FormField";
+import Breadcrumb from "@/components/Breadcrumb";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
-
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+import { API_BASE } from "@/lib/constants";
 
 type FormState = {
   case_id: string;
@@ -33,6 +33,7 @@ export default function NewCase() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!getToken()) {
@@ -48,22 +49,33 @@ export default function NewCase() {
 
   function handleText(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
+    }
+  }
+
+  function validate(): boolean {
+    const errors: Record<string, string> = {};
+    if (!form.case_id.trim()) {
+      errors.case_id = "Case ID zorunlu.";
+    }
+    const size = parseInt(form.lesion_size_mm, 10);
+    if (!form.lesion_size_mm.trim()) {
+      errors.lesion_size_mm = "Lezyon boyutu zorunlu.";
+    } else if (isNaN(size) || size < 0 || size > 200) {
+      errors.lesion_size_mm = "Lezyon boyutu 0-200 mm arasinda olmali.";
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (!form.case_id.trim()) {
-      setError("Case ID zorunlu.");
-      return;
-    }
-    const size = parseInt(form.lesion_size_mm, 10);
-    if (isNaN(size) || size < 0 || size > 200) {
-      setError("Lezyon boyutu 0-200 mm arasında olmalı.");
-      return;
-    }
+    if (!validate()) return;
 
+    const size = parseInt(form.lesion_size_mm, 10);
     const body = {
       arterial_phase: { hyperenhancement: form.arterial_hyperenhancement },
       portal_phase: { washout: form.portal_washout },
@@ -75,7 +87,7 @@ export default function NewCase() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API}/analyze/${encodeURIComponent(form.case_id.trim())}`,
+        `${API_BASE}/analyze/${encodeURIComponent(form.case_id.trim())}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -99,12 +111,8 @@ export default function NewCase() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Link href="/" className="text-sm text-zinc-600 hover:underline">
-          ← Cases
-        </Link>
-        <span className="text-zinc-300">/</span>
-        <span className="text-sm font-medium">Yeni Vaka</span>
+      <div>
+        <Breadcrumb items={[{ label: "Ana Sayfa", href: "/" }, { label: "Vakalar", href: "/cases" }, { label: "Yeni Vaka" }]} />
       </div>
 
       <Card>
@@ -112,47 +120,41 @@ export default function NewCase() {
           <CardTitle>Yeni LI-RADS Analizi</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={submit} className="space-y-6">
+          <form onSubmit={submit} className="space-y-6" noValidate>
             {/* Case ID */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Case ID <span className="text-red-500">*</span>
-              </label>
-              <input
+            <FormField label="Case ID" required error={fieldErrors.case_id}>
+              <Input
                 type="text"
                 value={form.case_id}
                 onChange={(e) => handleText("case_id", e.target.value)}
-                placeholder="Örnek: CASE1001"
-                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                placeholder="Ornek: CASE1001"
+                error={!!fieldErrors.case_id}
               />
-            </div>
+            </FormField>
 
             {/* Lezyon boyutu */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
-                Lezyon Boyutu (mm) <span className="text-red-500">*</span>
-              </label>
-              <input
+            <FormField label="Lezyon Boyutu (mm)" required error={fieldErrors.lesion_size_mm} hint="0 ile 200 mm arasinda bir deger girin">
+              <Input
                 type="number"
                 min={0}
                 max={200}
                 value={form.lesion_size_mm}
                 onChange={(e) => handleText("lesion_size_mm", e.target.value)}
-                placeholder="Örnek: 22"
-                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                placeholder="Ornek: 22"
+                error={!!fieldErrors.lesion_size_mm}
               />
-            </div>
+            </FormField>
 
             {/* Klinik bulgular */}
-            <div>
-              <div className="text-sm font-medium text-zinc-700 mb-2">Klinik Bulgular</div>
+            <fieldset>
+              <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Klinik Bulgular</legend>
               <div className="space-y-2">
                 {(
                   [
                     { field: "cirrhosis", label: "Siroz (Cirrhosis)" },
                     { field: "arterial_hyperenhancement", label: "Arteriyel hiperenhansman" },
-                    { field: "portal_washout", label: "Portal/venöz washout" },
-                    { field: "delayed_capsule", label: "Kapsül (geç faz)" },
+                    { field: "portal_washout", label: "Portal/venoz washout" },
+                    { field: "delayed_capsule", label: "Kapsul (gec faz)" },
                   ] as { field: keyof FormState; label: string }[]
                 ).map(({ field, label }) => (
                   <label key={field} className="flex items-center gap-2 cursor-pointer">
@@ -160,39 +162,39 @@ export default function NewCase() {
                       type="checkbox"
                       checked={!!form[field]}
                       onChange={() => handleCheck(field)}
-                      className="h-4 w-4 rounded border-zinc-300"
+                      className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600"
                     />
-                    <span className="text-sm text-zinc-700">{label}</span>
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300">{label}</span>
                   </label>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
-            {/* LI-RADS kılavuzu */}
-            <div className="rounded-md bg-zinc-50 border border-zinc-200 p-3 text-xs text-zinc-500 space-y-1">
-              <div className="font-medium text-zinc-600">LI-RADS Karar Özeti</div>
-              <div>LR-5 (Kesin HCC): Siroz + arteriyel + washout + kapsül + ≥10 mm</div>
-              <div>LR-4 (Muhtemel HCC): Siroz + arteriyel + washout + ≥10 mm</div>
-              <div>LR-3 (Ara): Siroz + arteriyel + ≥10 mm veya arteriyel + &lt;10 mm</div>
-              <div>LR-2 (Muhtemelen benign): Diğer</div>
+            {/* LI-RADS kilavuzu */}
+            <div className="rounded-md bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 p-3 text-xs text-zinc-500 dark:text-zinc-400 space-y-1">
+              <div className="font-medium text-zinc-600 dark:text-zinc-300">LI-RADS Karar Ozeti</div>
+              <div>LR-5 (Kesin HCC): Siroz + arteriyel + washout + kapsul + &ge;10 mm</div>
+              <div>LR-4 (Muhtemel HCC): Siroz + arteriyel + washout + &ge;10 mm</div>
+              <div>LR-3 (Ara): Siroz + arteriyel + &ge;10 mm veya arteriyel + &lt;10 mm</div>
+              <div>LR-2 (Muhtemelen benign): Diger</div>
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
                 {error}
               </div>
             )}
 
             <div className="flex gap-2">
               <Button type="submit" disabled={loading}>
-                {loading ? "Analiz ediliyor…" : "Analizi Başlat"}
+                {loading ? "Analiz ediliyor..." : "Analizi Baslat"}
               </Button>
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => { setForm(defaultForm); setError(null); }}
+                onClick={() => { setForm(defaultForm); setError(null); setFieldErrors({}); }}
               >
-                Sıfırla
+                Sifirla
               </Button>
             </div>
           </form>
