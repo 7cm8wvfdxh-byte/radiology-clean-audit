@@ -1,12 +1,12 @@
 """Hasta CRUD işlemleri."""
+import json
 import datetime
 import logging
-from db import get_db, engine, Base
+from datetime import timezone
+from db import get_db
 from models import Patient, Case
 
 logger = logging.getLogger(__name__)
-
-Base.metadata.create_all(bind=engine)
 
 
 def create_patient(
@@ -25,7 +25,7 @@ def create_patient(
             full_name=full_name,
             birth_date=birth_date,
             gender=gender,
-            created_at=datetime.datetime.utcnow().isoformat() + "Z",
+            created_at=datetime.datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             created_by=created_by,
         )
         db.add(p)
@@ -47,10 +47,44 @@ def list_patients(limit: int = 50) -> list[dict]:
         return [_patient_to_dict(r) for r in rows]
 
 
-def get_patient_cases(patient_id: str) -> list[str]:
+def get_patient_cases(patient_id: str) -> list[dict]:
+    """Hasta vakalarını özet bilgilerle döner."""
     with get_db() as db:
-        rows = db.query(Case).filter(Case.patient_id == patient_id).all()
-        return [r.case_id for r in rows]
+        rows = db.query(Case).filter(
+            Case.patient_id == patient_id
+        ).order_by(Case.created_at.desc()).all()
+        result = []
+        for r in rows:
+            item: dict = {"case_id": r.case_id, "created_at": r.created_at}
+            try:
+                pack = json.loads(r.audit_pack_json)
+                item["decision"] = (pack.get("content") or {}).get("decision")
+                item["category"] = ((pack.get("content") or {}).get("lirads") or {}).get("category")
+            except (json.JSONDecodeError, TypeError):
+                pass
+            result.append(item)
+        return result
+
+
+def get_patient_cases_full(patient_id: str) -> list[dict]:
+    """Hasta vakalarının tam içeriğini döner (prior-cases karşılaştırma için, tek sorgu)."""
+    with get_db() as db:
+        rows = db.query(Case).filter(
+            Case.patient_id == patient_id
+        ).order_by(Case.created_at.desc()).all()
+        results = []
+        for r in rows:
+            try:
+                pack = json.loads(r.audit_pack_json)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            results.append({
+                "case_id": r.case_id,
+                "generated_at": pack.get("generated_at"),
+                "version": pack.get("version"),
+                "content": pack.get("content"),
+            })
+        return results
 
 
 def _patient_to_dict(p: Patient) -> dict:

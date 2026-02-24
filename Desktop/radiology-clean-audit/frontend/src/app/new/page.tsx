@@ -8,6 +8,7 @@ import { FormField, Input } from "@/components/ui/FormField";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
 
 type FormState = {
   case_id: string;
@@ -100,8 +101,8 @@ export default function NewCase() {
         throw new Error(detail?.detail ?? `HTTP ${res.status}`);
       }
       router.push(`/cases/${encodeURIComponent(form.case_id.trim())}`);
-    } catch (e: any) {
-      setError(e?.message ?? "Bilinmeyen hata");
+    } catch (e: unknown) {
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }

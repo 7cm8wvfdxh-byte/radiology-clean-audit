@@ -1,12 +1,11 @@
 """İkinci okuma (Second Reading) CRUD işlemleri."""
 import datetime
 import logging
-from db import get_db, engine, Base
+from datetime import timezone
+from db import get_db
 from models import SecondReading
 
 logger = logging.getLogger(__name__)
-
-Base.metadata.create_all(bind=engine)
 
 
 def create_second_reading(
@@ -27,7 +26,7 @@ def create_second_reading(
             reader_username=reader_username,
             status="pending",
             original_category=original_category,
-            created_at=datetime.datetime.utcnow().isoformat() + "Z",
+            created_at=datetime.datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         )
         db.add(sr)
         db.commit()
@@ -50,7 +49,7 @@ def complete_second_reading(
         sr.agreement = agreement
         sr.second_category = second_category
         sr.comments = comments
-        sr.completed_at = datetime.datetime.utcnow().isoformat() + "Z"
+        sr.completed_at = datetime.datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         db.commit()
         db.refresh(sr)
         logger.info("Ikinci okuma tamamlandi: id=%d, agreement=%s", reading_id, agreement)

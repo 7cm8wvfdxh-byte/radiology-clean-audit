@@ -5,11 +5,16 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException, Query, Depends, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, Query, Depends, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, Field
+from typing import Literal
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
 # ---------------------------------------------------------------------------
 # Logging yapılandırması
@@ -33,6 +38,7 @@ from core.auth import (
 )
 from core.agent.dicom_utils import extract_images_from_dicom
 from core.agent.radiologist import stream_radiologist_analysis, stream_followup
+from db import init_db
 from store.store import save_case, get_case, delete_case, list_cases, get_case_stats, get_case_versions
 from store.user_store import ensure_default_admin, get_user
 from store.patient_store import create_patient, get_patient, list_patients, get_patient_cases
@@ -47,6 +53,7 @@ from core.critical_findings import detect_critical_findings, get_checklist
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Uygulama başlatılıyor...")
+    init_db()
     ensure_default_admin()
     logger.info("Varsayılan admin kontrol edildi.")
     yield
@@ -56,7 +63,20 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
-app = FastAPI(title="Radiology-Clean API", version="2.1.0", lifespan=lifespan)
+app = FastAPI(title="Radiology-Clean API", version="2.2.0", lifespan=lifespan)
+
+# Rate limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_middleware(SlowAPIMiddleware)
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Çok fazla istek. Lütfen bekleyin."},
+    )
 
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
@@ -107,7 +127,8 @@ class PatientCreate(BaseModel):
 # Auth routes
 # ---------------------------------------------------------------------------
 @app.post("/auth/token", response_model=TokenResponse, tags=["auth"])
-def login(form: OAuth2PasswordRequestForm = Depends()):
+@limiter.limit("10/minute")
+def login(request: Request, form: OAuth2PasswordRequestForm = Depends()):
     user = get_user(form.username)
     if not user or not verify_password(form.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Kullanıcı adı veya şifre hatalı")
@@ -226,12 +247,14 @@ def verify(case_id: str, sig: str = Query(..., description="HMAC-SHA256 imzası"
 @app.get("/export/pdf/{case_id}", tags=["export"])
 def export_pdf(
     case_id: str,
+    background_tasks: BackgroundTasks,
     user: UserInToken = Depends(get_current_user),
 ):
     pack = get_case(case_id)
     if pack is None:
         raise HTTPException(status_code=404, detail="Case not found")
     path = generate_pdf(pack)
+    background_tasks.add_task(os.remove, path)
     return FileResponse(path, media_type="application/pdf", filename=f"{case_id}.pdf")
 
 
@@ -341,9 +364,43 @@ async def agent_analyze(
     )
 
 
+class LesionInput(BaseModel):
+    location: str = Field(None)
+    size_mm: str | int | float = Field(None)
+    arterial_enhancement: str = Field(None)
+    washout: bool = False
+    capsule: bool = False
+    peripheral_washout: bool = False
+    delayed_central_enhancement: bool = False
+    infiltrative: bool = False
+    tumor_in_vein: bool = False
+    dwi_restriction: bool = False
+    additional: str = Field(None)
+
+    class Config:
+        extra = "allow"
+
+
+class ClinicalDataInput(BaseModel):
+    region: str = Field(None)
+    age: str | int = Field(None)
+    gender: str = Field(None)
+    indication: str = Field(None)
+    risk_factors: str = Field(None)
+    cirrhosis: bool = False
+    lesions: list[LesionInput] = Field(default_factory=list)
+    brain_lesions: list[dict] = Field(default_factory=list)
+    spine_lesions: list[dict] = Field(default_factory=list)
+    thorax_lesions: list[dict] = Field(default_factory=list)
+    pelvis_lesions: list[dict] = Field(default_factory=list)
+
+    class Config:
+        extra = "allow"
+
+
 class AgentSaveRequest(BaseModel):
     case_id: str = Field(..., min_length=1, description="Vaka ID (ör: CASE-1001)")
-    clinical_data: dict = Field(..., description="Ajan formundan gelen klinik veri")
+    clinical_data: ClinicalDataInput = Field(..., description="Ajan formundan gelen klinik veri")
     agent_report: str = Field(..., min_length=1, description="Ajan tarafından üretilen rapor metni")
     patient_id: str = Field(None, description="Opsiyonel hasta ID'si")
 
@@ -360,7 +417,7 @@ def agent_save(
     previous_pack = get_case(body.case_id)
     pack = build_agent_pack(
         case_id=body.case_id,
-        clinical_data=body.clinical_data,
+        clinical_data=body.clinical_data.model_dump(),
         agent_report=body.agent_report,
         verify_base_url=VERIFY_BASE_URL,
         previous_pack=previous_pack,
@@ -481,6 +538,18 @@ def get_case_second_reads(
     return get_case_second_readings(case_id)
 
 
+@app.get("/second-readings/export", tags=["second-reading"])
+def export_second_readings(
+    user: UserInToken = Depends(require_role("admin")),
+):
+    """Tüm ikinci okuma sonuçlarını JSON olarak dışa aktarır (admin only)."""
+    readings = list_second_readings(limit=1000)
+    return JSONResponse(
+        content={"second_readings": readings, "total": len(readings)},
+        headers={"Content-Disposition": 'attachment; filename="second_readings_export.json"'},
+    )
+
+
 # ---------------------------------------------------------------------------
 # Checklist routes
 # ---------------------------------------------------------------------------
@@ -495,15 +564,18 @@ def get_region_checklist(
 # ---------------------------------------------------------------------------
 # Critical Findings
 # ---------------------------------------------------------------------------
+class CriticalFindingsRequest(BaseModel):
+    clinical_data: ClinicalDataInput = Field(default_factory=ClinicalDataInput)
+    lirads_result: dict = Field(None, description="LI-RADS karar motoru sonucu")
+
+
 @app.post("/critical-findings", tags=["critical"])
 def check_critical(
-    body: dict,
+    body: CriticalFindingsRequest,
     user: UserInToken = Depends(get_current_user),
 ):
     """Klinik verilerden kritik bulguları algıla."""
-    clinical_data = body.get("clinical_data", {})
-    lirads_result = body.get("lirads_result")
-    findings = detect_critical_findings(clinical_data, lirads_result)
+    findings = detect_critical_findings(body.clinical_data.model_dump(), body.lirads_result)
     return {"findings": findings, "has_critical": any(f["level"] == "critical" for f in findings)}
 
 
@@ -515,26 +587,19 @@ def get_prior_cases(
     patient_id: str,
     user: UserInToken = Depends(get_current_user),
 ):
-    """Bir hastanın tüm önceki vakalarını karşılaştırma amaçlı döner."""
-    from store.store import get_case as _get_case
-    case_ids = get_patient_cases(patient_id)
-    results = []
-    for cid in case_ids:
-        pack = _get_case(cid)
-        if pack:
-            results.append({
-                "case_id": cid,
-                "generated_at": pack.get("generated_at"),
-                "version": pack.get("version"),
-                "content": pack.get("content"),
-            })
-    results.sort(key=lambda x: x.get("generated_at", ""), reverse=True)
-    return results
+    """Bir hastanın tüm önceki vakalarını karşılaştırma amaçlı döner (tek sorgu)."""
+    from store.patient_store import get_patient_cases_full
+    return get_patient_cases_full(patient_id)
+
+
+class ConversationMessage(BaseModel):
+    role: Literal["user", "assistant"] = Field(...)
+    content: str = Field(..., max_length=50000)
 
 
 class FollowupRequest(BaseModel):
-    history: list = Field(..., description="Konuşma geçmişi [{role, content}, ...]")
-    question: str = Field(..., min_length=1, description="Takip sorusu")
+    history: list[ConversationMessage] = Field(..., max_length=50, description="Konuşma geçmişi")
+    question: str = Field(..., min_length=1, max_length=2000, description="Takip sorusu")
 
 
 @app.post("/agent/followup", tags=["agent"])
@@ -546,8 +611,10 @@ async def agent_followup(
     Mevcut konuşma geçmişine takip sorusu gönderir.
     Yanıt SSE stream olarak gelir.
     """
+    history_dicts = [m.model_dump() for m in body.history]
+
     async def event_stream():
-        async for chunk in stream_followup(body.history, body.question):
+        async for chunk in stream_followup(history_dicts, body.question):
             payload = json.dumps({"text": chunk, "done": False}, ensure_ascii=False)
             yield f"data: {payload}\n\n"
         yield f"data: {json.dumps({'text': '', 'done': True})}\n\n"

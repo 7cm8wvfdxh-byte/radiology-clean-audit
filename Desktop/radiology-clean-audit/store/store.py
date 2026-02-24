@@ -1,13 +1,10 @@
 import json
 import logging
 from sqlalchemy import func
-from db import get_db, engine, Base
+from db import get_db
 from models import Case, CaseVersion, Patient
 
 logger = logging.getLogger(__name__)
-
-# tabloyu oluştur
-Base.metadata.create_all(bind=engine)
 
 def save_case(case_id: str, audit_pack: dict, created_by: str = "", patient_id: str = None) -> None:
     with get_db() as db:

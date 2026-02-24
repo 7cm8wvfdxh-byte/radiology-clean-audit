@@ -10,6 +10,8 @@ import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { SkeletonCard } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
+import type { AuditPack } from "@/types/audit";
 
 type VersionEntry = {
   version: number;
@@ -26,10 +28,11 @@ export default function CaseDetail({ params }: { params: Promise<{ case_id: stri
   const { case_id } = use(params);
   const caseId = useMemo(() => decodeURIComponent(case_id), [case_id]);
 
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<AuditPack | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showRaw, setShowRaw] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
   // Audit trail
   const [versions, setVersions] = useState<VersionEntry[]>([]);
@@ -54,8 +57,8 @@ export default function CaseDetail({ params }: { params: Promise<{ case_id: stri
         if (versionsRes.ok) {
           setVersions(await versionsRes.json());
         }
-      } catch (e: any) {
-        setErr(e?.message ?? "Fetch error");
+      } catch (e: unknown) {
+        setErr(getErrorMessage(e));
         setData(null);
       } finally {
         setLoading(false);
@@ -72,7 +75,11 @@ export default function CaseDetail({ params }: { params: Promise<{ case_id: stri
   async function copyJson() {
     try {
       await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    } catch {}
+      setCopyStatus("Kopyalandi!");
+    } catch {
+      setCopyStatus("Kopyalanamadi");
+    }
+    setTimeout(() => setCopyStatus(null), 2000);
   }
 
   async function openPdf() {
@@ -97,7 +104,7 @@ export default function CaseDetail({ params }: { params: Promise<{ case_id: stri
 
         <div className="flex gap-2">
           <Button variant="secondary" onClick={copyJson} disabled={!data}>
-            JSON Kopyala
+            {copyStatus ?? "JSON Kopyala"}
           </Button>
           <Button variant="secondary" onClick={openVerify} disabled={!verifyUrl}>
             Verify

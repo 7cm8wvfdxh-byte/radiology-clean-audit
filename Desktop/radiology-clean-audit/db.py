@@ -21,6 +21,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
+def init_db():
+    """Tüm tabloları tek seferde oluşturur. Uygulama başlangıcında çağrılmalı."""
+    Base.metadata.create_all(bind=engine)
+    logger.info("Veritabani tablolari olusturuldu/kontrol edildi.")
+
+
 @contextmanager
 def get_db():
     """Context manager ile guvenli session yonetimi."""

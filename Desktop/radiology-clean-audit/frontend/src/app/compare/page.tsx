@@ -9,6 +9,8 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { SkeletonCard } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
+import { getErrorMessage } from "@/lib/errors";
+import type { AuditPack } from "@/types/audit";
 
 type CaseItem = {
   case_id: string;
@@ -16,7 +18,7 @@ type CaseItem = {
   decision?: string;
 };
 
-function CasePanel({ data, label }: { data: any; label: string }) {
+function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
   if (!data) {
     return (
       <Card className="flex-1">
@@ -158,8 +160,8 @@ export default function ComparePage() {
 
   const [caseIdA, setCaseIdA] = useState("");
   const [caseIdB, setCaseIdB] = useState("");
-  const [dataA, setDataA] = useState<any>(null);
-  const [dataB, setDataB] = useState<any>(null);
+  const [dataA, setDataA] = useState<AuditPack | null>(null);
+  const [dataB, setDataB] = useState<AuditPack | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -194,8 +196,8 @@ export default function ComparePage() {
       const data = await res.json();
       if (side === "a") setDataA(data);
       else setDataB(data);
-    } catch (e: any) {
-      setErr(e?.message ?? "Yuklenemedi");
+    } catch (e: unknown) {
+      setErr(getErrorMessage(e));
     }
   }
 

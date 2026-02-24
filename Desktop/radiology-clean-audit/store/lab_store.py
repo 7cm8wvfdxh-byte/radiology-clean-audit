@@ -1,12 +1,11 @@
 """Laboratuvar sonuçları CRUD işlemleri."""
 import datetime
 import logging
-from db import get_db, engine, Base
+from datetime import timezone
+from db import get_db
 from models import LabResult
 
 logger = logging.getLogger(__name__)
-
-Base.metadata.create_all(bind=engine)
 
 
 def create_lab_result(
@@ -27,8 +26,8 @@ def create_lab_result(
             unit=unit,
             reference_range=reference_range,
             is_abnormal=is_abnormal,
-            test_date=test_date or datetime.datetime.utcnow().strftime("%Y-%m-%d"),
-            created_at=datetime.datetime.utcnow().isoformat() + "Z",
+            test_date=test_date or datetime.datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            created_at=datetime.datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             created_by=created_by,
         )
         db.add(lr)
