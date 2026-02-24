@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 
 const backend = process.env.NEXT_PUBLIC_API_BASE!;
 
-export async function GET(req: Request, ctx: { params: { case_id: string } }) {
-  const { case_id } = ctx.params;
+export async function GET(req: Request, ctx: { params: Promise<{ case_id: string }> }) {
+  const { case_id } = await ctx.params;
 
   const { searchParams } = new URL(req.url);
   const sig = searchParams.get("sig");

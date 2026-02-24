@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { getToken, setToken, clearToken, authHeaders } from "@/lib/auth";
 
 const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
@@ -13,20 +14,128 @@ type CaseItem = {
   created_at?: string;
 };
 
-export default function Home() {
+// ── Login Form ────────────────────────────────────────────────────────────────
+function LoginForm({ onLogin }: { onLogin: () => void }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      const form = new URLSearchParams();
+      form.append("username", username);
+      form.append("password", password);
+      const res = await fetch(`${API}/auth/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: form.toString(),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.detail ?? "Kullanıcı adı veya şifre hatalı");
+      }
+      const data = await res.json();
+      setToken(data.access_token);
+      onLogin();
+    } catch (e: any) {
+      setError(e?.message ?? "Giriş başarısız");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-semibold text-zinc-900">Radiology-Clean</h1>
+          <p className="text-sm text-zinc-500 mt-1">Sisteme giriş yapın</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Giriş</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Kullanıcı Adı
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin"
+                  required
+                  autoFocus
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                  Şifre
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                />
+              </div>
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                  {error}
+                </div>
+              )}
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+        <p className="text-center text-xs text-zinc-400 mt-4">
+          Radiology-Clean Audit v2.1
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Case List ─────────────────────────────────────────────────────────────────
+function CaseList({ onLogout }: { onLogout: () => void }) {
   const [items, setItems] = useState<CaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    const token = getToken();
+    if (!token) { onLogout(); return; }
     (async () => {
       try {
         setErr(null);
-        const res = await fetch(`${API}/cases`);
+        const res = await fetch(`${API}/cases`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          clearToken();
+          onLogout();
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setItems(Array.isArray(data) ? data : []);
       } catch (e: any) {
+        if ((e?.message ?? "").includes("401")) {
+          clearToken();
+          onLogout();
+          return;
+        }
         setErr(e?.message ?? "Fetch error");
       } finally {
         setLoading(false);
@@ -39,25 +148,43 @@ export default function Home() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">Cases</h1>
-          <div className="text-sm text-zinc-500">List + open a case detail</div>
+          <div className="text-sm text-zinc-500">Vaka listesi</div>
         </div>
-
-        <Link href="/new">
-          <Button>+ New Case</Button>
-        </Link>
+        <div className="flex gap-2 flex-wrap">
+          <Link href="/dashboard">
+            <Button>Dashboard</Button>
+          </Link>
+          <Link href="/agent">
+            <Button>Radyolog Ajan</Button>
+          </Link>
+          <Link href="/compare">
+            <Button variant="secondary">Karsilastir</Button>
+          </Link>
+          <Link href="/new">
+            <Button variant="secondary">+ Yeni Vaka</Button>
+          </Link>
+          <Link href="/patients">
+            <Button variant="secondary">Hastalar</Button>
+          </Link>
+          <Link href="/second-reading">
+            <Button variant="secondary">Ikinci Okuma</Button>
+          </Link>
+          <Button variant="secondary" onClick={() => { clearToken(); onLogout(); }}>
+            Çıkış
+          </Button>
+        </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Case List</CardTitle>
+          <CardTitle>Vaka Listesi</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && <div className="text-sm text-zinc-500">Loading…</div>}
-          {err && <div className="text-sm text-red-600">Error: {err}</div>}
+          {loading && <div className="text-sm text-zinc-500">Yükleniyor…</div>}
+          {err && <div className="text-sm text-red-600">Hata: {err}</div>}
           {!loading && !err && items.length === 0 && (
-            <div className="text-sm text-zinc-500">No cases found.</div>
+            <div className="text-sm text-zinc-500">Henüz vaka yok. "+ Yeni Vaka" ile başlayın.</div>
           )}
-
           <ul className="divide-y divide-zinc-200">
             {items.map((c) => (
               <li key={c.case_id} className="py-3 flex items-center justify-between">
@@ -65,21 +192,29 @@ export default function Home() {
                   <div className="font-medium">{c.case_id}</div>
                   <div className="text-sm text-zinc-600">{c.decision ?? "-"}</div>
                 </div>
-
                 <Link href={`/cases/${encodeURIComponent(c.case_id)}`}>
-                  <Button variant="secondary">Open</Button>
+                  <Button variant="secondary">Aç</Button>
                 </Link>
               </li>
             ))}
           </ul>
         </CardContent>
       </Card>
-
-      <Card className="bg-white">
-        <CardContent className="text-sm text-zinc-600">
-          API Base: <span className="font-mono">{API}</span>
-        </CardContent>
-      </Card>
     </div>
   );
+}
+
+// ── Root Page ─────────────────────────────────────────────────────────────────
+export default function Home() {
+  const [authed, setAuthed] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    setAuthed(!!getToken());
+  }, []);
+
+  if (authed === null) return null; // hydration bekleniyor
+
+  if (!authed) return <LoginForm onLogin={() => setAuthed(true)} />;
+
+  return <CaseList onLogout={() => setAuthed(false)} />;
 }
