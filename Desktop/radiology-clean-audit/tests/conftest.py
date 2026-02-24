@@ -2,6 +2,7 @@
 import os
 
 # Ortam değişkenlerini test modunda ayarla (import'lardan önce!)
+os.environ["TESTING"] = "1"
 os.environ.setdefault("AUDIT_SECRET", "test-secret-key")
 os.environ.setdefault("ALLOWED_ORIGINS", "http://localhost:3000")
 os.environ.setdefault("VERIFY_BASE_URL", "http://localhost:8000")
