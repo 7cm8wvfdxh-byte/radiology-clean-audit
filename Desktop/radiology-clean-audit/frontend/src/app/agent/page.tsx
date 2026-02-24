@@ -9,6 +9,7 @@ import { getToken, clearToken } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
 import type {
   LabResult,
+  ChecklistItem,
   ConfidenceData,
   CriticalFinding,
   Lesion,
