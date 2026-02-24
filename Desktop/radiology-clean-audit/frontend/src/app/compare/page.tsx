@@ -2,31 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import LiradsBadge from "@/components/LiradsBadge";
+import Breadcrumb from "@/components/Breadcrumb";
+import { SkeletonCard } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
-
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-
-const LIRADS_COLORS: Record<string, string> = {
-  "LR-1": "bg-green-100 text-green-800 border-green-300",
-  "LR-2": "bg-green-50 text-green-700 border-green-200",
-  "LR-3": "bg-yellow-50 text-yellow-800 border-yellow-300",
-  "LR-4": "bg-orange-50 text-orange-800 border-orange-300",
-  "LR-5": "bg-red-50 text-red-800 border-red-300",
-  "LR-M": "bg-purple-50 text-purple-800 border-purple-300",
-  "LR-TIV": "bg-red-100 text-red-900 border-red-400",
-};
-
-function LiradsBadge({ category, label }: { category: string; label?: string }) {
-  const color = LIRADS_COLORS[category] || "bg-zinc-100 text-zinc-800 border-zinc-300";
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${color}`}>
-      {label ?? category}
-    </span>
-  );
-}
+import { API_BASE } from "@/lib/constants";
 
 type CaseItem = {
   case_id: string;
@@ -39,7 +21,7 @@ function CasePanel({ data, label }: { data: any; label: string }) {
     return (
       <Card className="flex-1">
         <CardContent className="pt-4">
-          <div className="text-sm text-zinc-400 text-center py-8">
+          <div className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-8">
             {label} secilmedi
           </div>
         </CardContent>
@@ -65,69 +47,69 @@ function CasePanel({ data, label }: { data: any; label: string }) {
       <CardContent className="space-y-3">
         {/* Karar */}
         <div>
-          <div className="text-xs text-zinc-500">Karar</div>
-          <div className="text-sm font-medium">{content.decision ?? "-"}</div>
+          <div className="text-xs text-zinc-500 dark:text-zinc-400">Karar</div>
+          <div className="text-sm font-medium dark:text-zinc-100">{content.decision ?? "-"}</div>
         </div>
 
         {/* Tarih & versiyon */}
         <div className="grid grid-cols-2 gap-2">
           <div>
-            <div className="text-xs text-zinc-500">Tarih</div>
-            <div className="text-xs font-mono">{data.generated_at?.slice(0, 19)}</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">Tarih</div>
+            <div className="text-xs font-mono dark:text-zinc-300">{data.generated_at?.slice(0, 19)}</div>
           </div>
           <div>
-            <div className="text-xs text-zinc-500">Versiyon</div>
-            <div className="text-xs">v{data.version ?? 1}</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400">Versiyon</div>
+            <div className="text-xs dark:text-zinc-300">v{data.version ?? 1}</div>
           </div>
         </div>
 
         {/* DSL ozellikleri */}
         <div>
-          <div className="text-xs text-zinc-500 mb-1">Lezyon Ozellikleri</div>
+          <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Lezyon Ozellikleri</div>
           <div className="grid grid-cols-2 gap-1 text-xs">
             <div className="flex justify-between">
-              <span className="text-zinc-500">APHE:</span>
-              <span className={dsl.arterial_phase?.hyperenhancement ? "text-red-600 font-medium" : "text-zinc-400"}>
+              <span className="text-zinc-500 dark:text-zinc-400">APHE:</span>
+              <span className={dsl.arterial_phase?.hyperenhancement ? "text-red-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.arterial_phase?.hyperenhancement ? "Var" : "Yok"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-500">Washout:</span>
-              <span className={dsl.portal_phase?.washout ? "text-red-600 font-medium" : "text-zinc-400"}>
+              <span className="text-zinc-500 dark:text-zinc-400">Washout:</span>
+              <span className={dsl.portal_phase?.washout ? "text-red-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.portal_phase?.washout ? "Var" : "Yok"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-500">Kapsul:</span>
-              <span className={dsl.delayed_phase?.capsule ? "text-red-600 font-medium" : "text-zinc-400"}>
+              <span className="text-zinc-500 dark:text-zinc-400">Kapsul:</span>
+              <span className={dsl.delayed_phase?.capsule ? "text-red-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.delayed_phase?.capsule ? "Var" : "Yok"}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-500">Boyut:</span>
-              <span className="font-medium">{dsl.lesion_size_mm ?? 0} mm</span>
+              <span className="text-zinc-500 dark:text-zinc-400">Boyut:</span>
+              <span className="font-medium dark:text-zinc-200">{dsl.lesion_size_mm ?? 0} mm</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-zinc-500">Siroz:</span>
-              <span className={dsl.cirrhosis ? "text-amber-600 font-medium" : "text-zinc-400"}>
+              <span className="text-zinc-500 dark:text-zinc-400">Siroz:</span>
+              <span className={dsl.cirrhosis ? "text-amber-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.cirrhosis ? "Var" : "Yok"}
               </span>
             </div>
             {dsl.rim_aphe && (
               <div className="flex justify-between">
-                <span className="text-zinc-500">Rim APHE:</span>
+                <span className="text-zinc-500 dark:text-zinc-400">Rim APHE:</span>
                 <span className="text-purple-600 font-medium">Var</span>
               </div>
             )}
             {dsl.tumor_in_vein && (
               <div className="flex justify-between">
-                <span className="text-zinc-500">Tumor in Vein:</span>
+                <span className="text-zinc-500 dark:text-zinc-400">Tumor in Vein:</span>
                 <span className="text-red-700 font-medium">Var</span>
               </div>
             )}
             {dsl.infiltrative && (
               <div className="flex justify-between">
-                <span className="text-zinc-500">Infiltratif:</span>
+                <span className="text-zinc-500 dark:text-zinc-400">Infiltratif:</span>
                 <span className="text-purple-600 font-medium">Var</span>
               </div>
             )}
@@ -137,10 +119,10 @@ function CasePanel({ data, label }: { data: any; label: string }) {
         {/* Uygulanan kriterler */}
         {lirads.applied_criteria?.length > 0 && (
           <div>
-            <div className="text-xs text-zinc-500 mb-1">Uygulanan Kriterler</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Uygulanan Kriterler</div>
             <div className="flex flex-wrap gap-1">
               {lirads.applied_criteria.map((c: string) => (
-                <span key={c} className="text-xs bg-zinc-100 text-zinc-600 px-1.5 py-0.5 rounded">
+                <span key={c} className="text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded">
                   {c}
                 </span>
               ))}
@@ -151,8 +133,8 @@ function CasePanel({ data, label }: { data: any; label: string }) {
         {/* Klinik bilgiler */}
         {clinicalData && (
           <div>
-            <div className="text-xs text-zinc-500 mb-1">Klinik</div>
-            <div className="text-xs text-zinc-600 space-y-0.5">
+            <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Klinik</div>
+            <div className="text-xs text-zinc-600 dark:text-zinc-300 space-y-0.5">
               {clinicalData.age && <div>Yas: {clinicalData.age}</div>}
               {clinicalData.gender && <div>Cinsiyet: {clinicalData.gender}</div>}
               {clinicalData.indication && <div>Endikasyon: {clinicalData.indication}</div>}
@@ -161,7 +143,7 @@ function CasePanel({ data, label }: { data: any; label: string }) {
         )}
 
         {/* Imza */}
-        <div className="text-xs text-zinc-400 font-mono">
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
           {data.signature?.slice(0, 16)}...
         </div>
       </CardContent>
@@ -186,7 +168,7 @@ export default function ComparePage() {
 
     (async () => {
       try {
-        const res = await fetch(`${API}/cases?limit=100`, { headers: authHeaders() });
+        const res = await fetch(`${API_BASE}/cases?limit=100`, { headers: authHeaders() });
         if (res.status === 401) { clearToken(); router.replace("/"); return; }
         if (!res.ok) return;
         const data = await res.json();
@@ -205,7 +187,7 @@ export default function ComparePage() {
     }
     setErr(null);
     try {
-      const res = await fetch(`${API}/cases/${encodeURIComponent(caseId)}`, {
+      const res = await fetch(`${API_BASE}/cases/${encodeURIComponent(caseId)}`, {
         headers: authHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -257,21 +239,20 @@ export default function ComparePage() {
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/" className="text-sm text-zinc-600 hover:underline">
-          &larr; Ana Sayfa
-        </Link>
-        <h1 className="text-xl font-semibold mt-1">Vaka Karsilastirma</h1>
-        <p className="text-sm text-zinc-500">Iki vakayi yan yana karsilastirin</p>
+        <Breadcrumb items={[{ label: "Ana Sayfa", href: "/" }, { label: "Karsilastirma" }]} />
+        <h1 className="text-xl font-semibold mt-2 dark:text-zinc-100">Vaka Karsilastirma</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Iki vakayi yan yana karsilastirin</p>
       </div>
 
       {/* Secim */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">Sol Vaka</label>
+          <label htmlFor="select-left" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">Sol Vaka</label>
           <select
+            id="select-left"
             value={caseIdA}
             onChange={(e) => selectA(e.target.value)}
-            className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
           >
             <option value="">Secin...</option>
             {cases.map((c) => (
@@ -282,11 +263,12 @@ export default function ComparePage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">Sag Vaka</label>
+          <label htmlFor="select-right" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">Sag Vaka</label>
           <select
+            id="select-right"
             value={caseIdB}
             onChange={(e) => selectB(e.target.value)}
-            className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm"
+            className="w-full border border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
           >
             <option value="">Secin...</option>
             {cases.map((c) => (
@@ -299,8 +281,15 @@ export default function ComparePage() {
       </div>
 
       {err && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
           {err}
+        </div>
+      )}
+
+      {loading && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SkeletonCard />
+          <SkeletonCard />
         </div>
       )}
 
@@ -314,13 +303,13 @@ export default function ComparePage() {
           </CardHeader>
           <CardContent>
             {diffs.length === 0 ? (
-              <div className="text-sm text-green-700">
-                Her iki vaka aynı LI-RADS ozelliklerine sahip.
+              <div className="text-sm text-green-700 dark:text-green-400">
+                Her iki vaka ayni LI-RADS ozelliklerine sahip.
               </div>
             ) : (
               <ul className="space-y-1">
                 {diffs.map((d, i) => (
-                  <li key={i} className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                  <li key={i} className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded px-2 py-1">
                     {d}
                   </li>
                 ))}
@@ -331,12 +320,10 @@ export default function ComparePage() {
       )}
 
       {/* Yan yana paneller */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <CasePanel data={dataA} label="Sol vaka" />
         <CasePanel data={dataB} label="Sag vaka" />
       </div>
-
-      {loading && <div className="text-sm text-zinc-500">Vakalar yukleniyor...</div>}
     </div>
   );
 }

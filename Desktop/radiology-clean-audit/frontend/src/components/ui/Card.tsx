@@ -3,18 +3,18 @@ import React from "react";
 export function Card({ className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`rounded-xl border border-zinc-200 bg-white shadow-sm ${className}`}
+      className={`rounded-xl border border-zinc-200 bg-white shadow-sm dark:bg-zinc-900 dark:border-zinc-700 ${className}`}
       {...props}
     />
   );
 }
 
 export function CardHeader({ className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={`px-4 py-3 border-b border-zinc-200 ${className}`} {...props} />;
+  return <div className={`px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 ${className}`} {...props} />;
 }
 
 export function CardTitle({ className = "", ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return <h2 className={`text-base font-semibold ${className}`} {...props} />;
+  return <h2 className={`text-base font-semibold dark:text-zinc-100 ${className}`} {...props} />;
 }
 
 export function CardContent({ className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) {

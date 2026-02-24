@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { FormField, Input } from "@/components/ui/FormField";
+import { SkeletonList } from "@/components/Skeleton";
 import { getToken, setToken, clearToken, authHeaders } from "@/lib/auth";
-
-const API = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+import { API_BASE } from "@/lib/constants";
 
 type CaseItem = {
   case_id: string;
@@ -29,20 +30,20 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
       const form = new URLSearchParams();
       form.append("username", username);
       form.append("password", password);
-      const res = await fetch(`${API}/auth/token`, {
+      const res = await fetch(`${API_BASE}/auth/token`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: form.toString(),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data?.detail ?? "Kullanıcı adı veya şifre hatalı");
+        throw new Error(data?.detail ?? "Kullanici adi veya sifre hatali");
       }
       const data = await res.json();
       setToken(data.access_token);
       onLogin();
     } catch (e: any) {
-      setError(e?.message ?? "Giriş başarısız");
+      setError(e?.message ?? "Giris basarisiz");
     } finally {
       setLoading(false);
     }
@@ -52,54 +53,46 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
     <div className="min-h-[60vh] flex items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-semibold text-zinc-900">Radiology-Clean</h1>
-          <p className="text-sm text-zinc-500 mt-1">Sisteme giriş yapın</p>
+          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Radiology-Clean</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Sisteme giris yapin</p>
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Giriş</CardTitle>
+            <CardTitle>Giris</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Kullanıcı Adı
-                </label>
-                <input
+              <FormField label="Kullanici Adi" required>
+                <Input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="admin"
                   required
                   autoFocus
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
-                  Şifre
-                </label>
-                <input
+              </FormField>
+              <FormField label="Sifre" required>
+                <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
                 />
-              </div>
+              </FormField>
               {error && (
-                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
                   {error}
                 </div>
               )}
               <Button type="submit" disabled={loading} className="w-full">
-                {loading ? "Giriş yapılıyor…" : "Giriş Yap"}
+                {loading ? "Giris yapiliyor..." : "Giris Yap"}
               </Button>
             </form>
           </CardContent>
         </Card>
-        <p className="text-center text-xs text-zinc-400 mt-4">
+        <p className="text-center text-xs text-zinc-400 dark:text-zinc-500 mt-4">
           Radiology-Clean Audit v2.1
         </p>
       </div>
@@ -119,8 +112,8 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
     (async () => {
       try {
         setErr(null);
-        const res = await fetch(`${API}/cases`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await fetch(`${API_BASE}/cases`, {
+          headers: authHeaders(),
         });
         if (res.status === 401) {
           clearToken();
@@ -145,34 +138,9 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Cases</h1>
-          <div className="text-sm text-zinc-500">Vaka listesi</div>
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          <Link href="/dashboard">
-            <Button>Dashboard</Button>
-          </Link>
-          <Link href="/agent">
-            <Button>Radyolog Ajan</Button>
-          </Link>
-          <Link href="/compare">
-            <Button variant="secondary">Karsilastir</Button>
-          </Link>
-          <Link href="/new">
-            <Button variant="secondary">+ Yeni Vaka</Button>
-          </Link>
-          <Link href="/patients">
-            <Button variant="secondary">Hastalar</Button>
-          </Link>
-          <Link href="/second-reading">
-            <Button variant="secondary">Ikinci Okuma</Button>
-          </Link>
-          <Button variant="secondary" onClick={() => { clearToken(); onLogout(); }}>
-            Çıkış
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-xl font-semibold dark:text-zinc-100">Vakalar</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">Tum vaka listesi</p>
       </div>
 
       <Card>
@@ -180,24 +148,32 @@ function CaseList({ onLogout }: { onLogout: () => void }) {
           <CardTitle>Vaka Listesi</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && <div className="text-sm text-zinc-500">Yükleniyor…</div>}
-          {err && <div className="text-sm text-red-600">Hata: {err}</div>}
-          {!loading && !err && items.length === 0 && (
-            <div className="text-sm text-zinc-500">Henüz vaka yok. "+ Yeni Vaka" ile başlayın.</div>
+          {loading && <SkeletonList rows={3} />}
+          {err && (
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+              Hata: {err}
+            </div>
           )}
-          <ul className="divide-y divide-zinc-200">
-            {items.map((c) => (
-              <li key={c.case_id} className="py-3 flex items-center justify-between">
-                <div>
-                  <div className="font-medium">{c.case_id}</div>
-                  <div className="text-sm text-zinc-600">{c.decision ?? "-"}</div>
-                </div>
-                <Link href={`/cases/${encodeURIComponent(c.case_id)}`}>
-                  <Button variant="secondary">Aç</Button>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {!loading && !err && items.length === 0 && (
+            <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">
+              Henuz vaka yok. Ust menuden &quot;Yeni Vaka&quot; ile baslayabilirsiniz.
+            </div>
+          )}
+          {!loading && (
+            <ul className="divide-y divide-zinc-200 dark:divide-zinc-700">
+              {items.map((c) => (
+                <li key={c.case_id} className="py-3 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium dark:text-zinc-100">{c.case_id}</div>
+                    <div className="text-sm text-zinc-600 dark:text-zinc-400">{c.decision ?? "-"}</div>
+                  </div>
+                  <Link href={`/cases/${encodeURIComponent(c.case_id)}`}>
+                    <Button variant="secondary">Ac</Button>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
     </div>
