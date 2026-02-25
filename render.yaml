@@ -1,4 +1,5 @@
 services:
+  # ── Backend (FastAPI) ──────────────────────────────────────────────────────
   - type: web
     name: radiology-clean-api
     runtime: python
@@ -14,12 +15,26 @@ services:
       - key: DEFAULT_ADMIN_USER
         value: admin
       - key: DEFAULT_ADMIN_PASS
-        generateValue: true
+        value: Admin123!
       - key: ALLOWED_ORIGINS
-        value: https://radiology-clean-audit-rd4p.vercel.app
+        value: "*"
       - key: VERIFY_BASE_URL
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: PYTHON_VERSION
         value: "3.12.0"
+
+  # ── Frontend (Next.js) ─────────────────────────────────────────────────────
+  - type: web
+    name: radiology-clean-frontend
+    runtime: node
+    region: frankfurt
+    rootDir: Desktop/radiology-clean-audit/frontend
+    buildCommand: npm ci && npm run build
+    startCommand: npx next start -p $PORT
+    envVars:
+      - key: NEXT_PUBLIC_API_BASE
+        value: https://radiology-clean-audit.onrender.com
+      - key: NODE_VERSION
+        value: "20"
