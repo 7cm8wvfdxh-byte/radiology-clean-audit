@@ -39,14 +39,14 @@ export function DicomDropzone({
         onClick={() => inputRef.current?.click()}
         className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
           dragging
-            ? "border-zinc-500 bg-zinc-100"
-            : "border-zinc-300 hover:border-zinc-400 hover:bg-zinc-50"
+            ? "border-zinc-500 bg-zinc-100 dark:bg-zinc-800"
+            : "border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
         }`}
       >
-        <div className="text-sm text-zinc-500">
+        <div className="text-sm text-zinc-500 dark:text-zinc-400">
           DICOM dosyalarini buraya surukleyin veya tiklayin
         </div>
-        <div className="text-xs text-zinc-400 mt-1">
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
           (.dcm, .dicom — birden fazla secilebilir)
         </div>
         <input
@@ -64,7 +64,7 @@ export function DicomDropzone({
           {files.map((f, i) => (
             <li
               key={i}
-              className="flex items-center justify-between text-xs bg-zinc-50 border border-zinc-200 rounded px-3 py-1"
+              className="flex items-center justify-between text-xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-3 py-1"
             >
               <span className="font-mono truncate max-w-[80%]">{f.name}</span>
               <button
@@ -107,8 +107,8 @@ export function SequenceSelector({
           key={seq}
           className={`flex items-center gap-1.5 cursor-pointer text-xs px-2.5 py-1.5 rounded-md border transition-colors ${
             selected.includes(seq)
-              ? "bg-zinc-800 text-white border-zinc-800"
-              : "bg-white text-zinc-600 border-zinc-300 hover:border-zinc-400"
+              ? "bg-zinc-800 text-white border-zinc-800 dark:bg-zinc-200 dark:text-zinc-900 dark:border-zinc-200"
+              : "bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-300 dark:border-zinc-600 hover:border-zinc-400"
           }`}
         >
           <input
@@ -137,28 +137,28 @@ export function ReportViewer({ text, loading }: { text: string; loading: boolean
   const formatted = text.split("\n").map((line, i) => {
     if (line.startsWith("## ")) {
       return (
-        <h2 key={i} className="text-base font-bold text-zinc-900 mt-5 mb-2 border-b border-zinc-200 pb-1">
+        <h2 key={i} className="text-base font-bold text-zinc-900 dark:text-zinc-100 mt-5 mb-2 border-b border-zinc-200 dark:border-zinc-700 pb-1">
           {line.slice(3)}
         </h2>
       );
     }
     if (line.startsWith("**") && line.endsWith("**")) {
       return (
-        <p key={i} className="font-semibold text-zinc-800 mt-3 mb-1">
+        <p key={i} className="font-semibold text-zinc-800 dark:text-zinc-200 mt-3 mb-1">
           {line.slice(2, -2)}
         </p>
       );
     }
     if (line.startsWith("- ") || line.startsWith("* ")) {
       return (
-        <li key={i} className="ml-4 text-sm text-zinc-700 list-disc">
+        <li key={i} className="ml-4 text-sm text-zinc-700 dark:text-zinc-300 list-disc">
           {line.slice(2)}
         </li>
       );
     }
     if (line.startsWith("| ")) {
       return (
-        <p key={i} className="font-mono text-xs text-zinc-600 bg-zinc-50 px-2 py-0.5">
+        <p key={i} className="font-mono text-xs text-zinc-600 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800 px-2 py-0.5">
           {line}
         </p>
       );
@@ -171,10 +171,10 @@ export function ReportViewer({ text, loading }: { text: string; loading: boolean
     }
     const parts = line.split(/(\*\*[^*]+\*\*)/g);
     return (
-      <p key={i} className="text-sm text-zinc-700 leading-relaxed">
+      <p key={i} className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">
         {parts.map((part, j) =>
           part.startsWith("**") && part.endsWith("**") ? (
-            <strong key={j} className="text-zinc-800">{part.slice(2, -2)}</strong>
+            <strong key={j} className="text-zinc-800 dark:text-zinc-200">{part.slice(2, -2)}</strong>
           ) : (
             <span key={j}>{part}</span>
           )
@@ -220,7 +220,7 @@ export function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
           <div className="text-3xl font-bold">{score}%</div>
           <div className="flex-1">
             <div className="text-sm font-medium mb-1">Genel Guven Skoru</div>
-            <div className="w-full bg-zinc-200 rounded-full h-2.5">
+            <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2.5">
               <div className={`h-2.5 rounded-full ${barColor}`} style={{ width: `${score}%` }} />
             </div>
           </div>
@@ -228,10 +228,10 @@ export function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
 
         {data.diagnosis_confidence?.primary && (
           <div className="space-y-2">
-            <div className="text-sm font-semibold text-zinc-700">Primer Tani</div>
-            <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3">
+            <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Primer Tani</div>
+            <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium text-zinc-800">
+                <span className="font-medium text-zinc-800 dark:text-zinc-200">
                   {data.diagnosis_confidence.primary.diagnosis}
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
@@ -242,7 +242,7 @@ export function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
                   {data.diagnosis_confidence.primary.confidence}%
                 </span>
               </div>
-              <p className="text-xs text-zinc-500 mt-1">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
                 {data.diagnosis_confidence.primary.reasoning}
               </p>
             </div>
@@ -251,7 +251,7 @@ export function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
 
         {data.diagnosis_confidence?.alternatives && data.diagnosis_confidence.alternatives.length > 0 && (
           <div className="space-y-2">
-            <div className="text-sm font-semibold text-zinc-700">Alternatif Tanilar</div>
+            <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Alternatif Tanilar</div>
             {data.diagnosis_confidence.alternatives.map((alt, i) => (
               <div key={i} className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded px-3 py-2">
                 <div>
@@ -266,7 +266,7 @@ export function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
 
         {data.data_quality && (
           <div className="space-y-1">
-            <div className="text-sm font-semibold text-zinc-700">Veri Kalitesi: {data.data_quality.score}%</div>
+            <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Veri Kalitesi: {data.data_quality.score}%</div>
             {data.data_quality.limiting_factors && data.data_quality.limiting_factors.length > 0 && (
               <ul className="text-xs text-zinc-500 list-disc ml-4">
                 {data.data_quality.limiting_factors.map((f, i) => (
@@ -279,7 +279,7 @@ export function ConfidencePanel({ data }: { data: ConfidenceData | null }) {
 
         {data.key_findings && data.key_findings.length > 0 && (
           <div className="space-y-1">
-            <div className="text-sm font-semibold text-zinc-700">Kilit Bulgular</div>
+            <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Kilit Bulgular</div>
             {data.key_findings.map((kf, i) => (
               <div key={i} className={`text-xs px-2 py-1 rounded border ${
                 kf.significance === "critical" ? "bg-red-50 border-red-200 text-red-700" :
@@ -358,7 +358,7 @@ export function ChecklistPanel({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="w-full bg-zinc-200 rounded-full h-2">
+        <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
           <div
             className={`h-2 rounded-full transition-all ${pct === 100 ? "bg-green-500" : "bg-zinc-600"}`}
             style={{ width: `${pct}%` }}
@@ -366,7 +366,7 @@ export function ChecklistPanel({
         </div>
         {categories.map(cat => (
           <div key={cat}>
-            <div className="text-xs font-semibold text-zinc-500 mb-1">{cat}</div>
+            <div className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-1">{cat}</div>
             {items.filter(it => it.category === cat).map(it => (
               <label key={it.id} className="flex items-center gap-2 cursor-pointer py-0.5">
                 <input
@@ -375,7 +375,7 @@ export function ChecklistPanel({
                   onChange={() => onToggle(it.id)}
                   className="h-3.5 w-3.5 accent-green-600 rounded"
                 />
-                <span className={`text-xs ${checked[it.id] ? "text-zinc-400 line-through" : "text-zinc-700"}`}>
+                <span className={`text-xs ${checked[it.id] ? "text-zinc-400 dark:text-zinc-500 line-through" : "text-zinc-700 dark:text-zinc-300"}`}>
                   {it.label}
                 </span>
               </label>
@@ -431,19 +431,19 @@ export function LabPanel({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-zinc-700">Laboratuvar Sonuclari</span>
+        <span className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Laboratuvar Sonuclari</span>
         <button type="button" onClick={() => setAdding(!adding)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 underline">
+          className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 underline">
           {adding ? "Kapat" : "+ Lab Ekle"}
         </button>
       </div>
 
       {adding && (
-        <div className="bg-zinc-50 border border-zinc-200 rounded-lg p-3 space-y-2">
+        <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-3 space-y-2">
           <div>
-            <label className="block text-xs text-zinc-500 mb-1">Hizli Secim</label>
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">Hizli Secim</label>
             <select onChange={(e) => selectCommon(e.target.value)}
-              className="w-full border border-zinc-300 rounded-md px-2 py-1.5 text-sm">
+              className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-2 py-1.5 text-sm dark:bg-zinc-800 dark:text-zinc-100">
               <option value="">Test secin...</option>
               {COMMON_TESTS.map(t => (
                 <option key={t.name} value={t.name}>{t.name} ({t.ref} {t.unit})</option>
@@ -452,22 +452,22 @@ export function LabPanel({
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs text-zinc-500 mb-0.5">Test Adi</label>
+              <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">Test Adi</label>
               <input type="text" value={newLab.test_name}
                 onChange={(e) => setNewLab(l => ({ ...l, test_name: e.target.value }))}
-                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-2 py-1 text-sm dark:bg-zinc-800 dark:text-zinc-100" />
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-0.5">Deger</label>
+              <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">Deger</label>
               <input type="text" value={newLab.value}
                 onChange={(e) => setNewLab(l => ({ ...l, value: e.target.value }))}
-                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-2 py-1 text-sm dark:bg-zinc-800 dark:text-zinc-100" />
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-0.5">Durum</label>
+              <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">Durum</label>
               <select value={newLab.is_abnormal}
                 onChange={(e) => setNewLab(l => ({ ...l, is_abnormal: e.target.value }))}
-                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm">
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-2 py-1 text-sm dark:bg-zinc-800 dark:text-zinc-100">
                 <option value="normal">Normal</option>
                 <option value="high">Yuksek</option>
                 <option value="low">Dusuk</option>
@@ -476,22 +476,22 @@ export function LabPanel({
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs text-zinc-500 mb-0.5">Birim</label>
+              <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">Birim</label>
               <input type="text" value={newLab.unit}
                 onChange={(e) => setNewLab(l => ({ ...l, unit: e.target.value }))}
-                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-2 py-1 text-sm dark:bg-zinc-800 dark:text-zinc-100" />
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-0.5">Referans</label>
+              <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">Referans</label>
               <input type="text" value={newLab.reference_range}
                 onChange={(e) => setNewLab(l => ({ ...l, reference_range: e.target.value }))}
-                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-2 py-1 text-sm dark:bg-zinc-800 dark:text-zinc-100" />
             </div>
             <div>
-              <label className="block text-xs text-zinc-500 mb-0.5">Tarih</label>
+              <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">Tarih</label>
               <input type="date" value={newLab.test_date}
                 onChange={(e) => setNewLab(l => ({ ...l, test_date: e.target.value }))}
-                className="w-full border border-zinc-300 rounded px-2 py-1 text-sm" />
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded px-2 py-1 text-sm dark:bg-zinc-800 dark:text-zinc-100" />
             </div>
           </div>
           <button type="button" onClick={() => {
@@ -499,7 +499,7 @@ export function LabPanel({
               onAdd(newLab);
               setNewLab({ patient_id: "", test_name: "", value: "", unit: "", reference_range: "", is_abnormal: "normal", test_date: "" });
             }
-          }} className="text-xs bg-zinc-800 text-white px-3 py-1 rounded hover:bg-zinc-700">
+          }} className="text-xs bg-zinc-800 dark:bg-zinc-200 text-white dark:text-zinc-900 px-3 py-1 rounded hover:bg-zinc-700 dark:hover:bg-zinc-300">
             Ekle
           </button>
         </div>
@@ -509,9 +509,9 @@ export function LabPanel({
         <div className="space-y-1">
           {labs.map((lab, i) => (
             <div key={i} className={`flex items-center justify-between text-xs px-2 py-1 rounded border ${
-              lab.is_abnormal === "high" ? "bg-red-50 border-red-200" :
-              lab.is_abnormal === "low" ? "bg-blue-50 border-blue-200" :
-              "bg-zinc-50 border-zinc-200"
+              lab.is_abnormal === "high" ? "bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-800" :
+              lab.is_abnormal === "low" ? "bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-800" :
+              "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
             }`}>
               <span>
                 <strong>{lab.test_name}</strong>: {lab.value} {lab.unit}
@@ -539,15 +539,15 @@ export function PriorCasesPanel({
   if (!priorCases || priorCases.length === 0) return null;
   return (
     <div className="space-y-2">
-      <div className="text-sm font-semibold text-zinc-700">Onceki Vakalar ({priorCases.length})</div>
+      <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Onceki Vakalar ({priorCases.length})</div>
       <div className="space-y-1">
         {priorCases.map((pc, i) => {
           const lirads = pc.content?.lirads || {};
           const dsl = pc.content?.dsl || {};
           return (
-            <div key={i} className="flex items-center justify-between bg-zinc-50 border border-zinc-200 rounded px-3 py-2 text-xs">
+            <div key={i} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded px-3 py-2 text-xs">
               <div>
-                <span className="font-medium text-zinc-700">{pc.case_id}</span>
+                <span className="font-medium text-zinc-700 dark:text-zinc-300">{pc.case_id}</span>
                 <span className="text-zinc-400 ml-2">{pc.generated_at?.split("T")[0]}</span>
                 {lirads.category && (
                   <span className={`ml-2 px-1.5 py-0.5 rounded text-xs font-bold ${
@@ -565,7 +565,7 @@ export function PriorCasesPanel({
         })}
       </div>
       <button type="button" onClick={() => onSelect(priorCases)}
-        className="text-xs text-zinc-500 hover:text-zinc-700 underline">
+        className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 underline">
         Karsilastirma icin AI analizine dahil et
       </button>
     </div>
@@ -595,7 +595,7 @@ export function AgentLiradsBadge({ category, label }: { category: string; label:
 // ── Bolum Baslik Yardimcisi ──────────────────────────────────────────────────
 export function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-sm font-semibold text-zinc-800 border-b border-zinc-100 pb-1 mb-3">
+    <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 border-b border-zinc-100 dark:border-zinc-700 pb-1 mb-3">
       {children}
     </h3>
   );

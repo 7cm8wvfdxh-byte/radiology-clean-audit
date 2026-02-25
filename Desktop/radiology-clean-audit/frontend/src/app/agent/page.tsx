@@ -459,24 +459,24 @@ export default function AgentPage() {
       {/* Baslik */}
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/" className="text-sm text-zinc-600 hover:underline">
+          <Link href="/" className="text-sm text-zinc-600 dark:text-zinc-400 hover:underline">
             &larr; Cases
           </Link>
           <h1 className="text-xl font-semibold mt-1">Radyolog Ajan</h1>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
             MRI vakasini yapilandirilmis radyolog akil yurutmesiyle analiz eder
           </p>
         </div>
         <div className="flex items-center gap-3">
           {/* Egitim Modu Toggle */}
-          <label className="flex items-center gap-2 cursor-pointer bg-zinc-100 border border-zinc-200 rounded-lg px-3 py-2">
+          <label className="flex items-center gap-2 cursor-pointer bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2">
             <input
               type="checkbox"
               checked={educationMode}
               onChange={(e) => setEducationMode(e.target.checked)}
               className="h-4 w-4 accent-indigo-600 rounded"
             />
-            <span className="text-sm font-medium text-zinc-700">Egitim Modu</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Egitim Modu</span>
           </label>
           {report && (
             <Button variant="secondary" onClick={copyReport}>
@@ -499,7 +499,7 @@ export default function AgentPage() {
           <CardContent className="space-y-4">
             {/* Bolge */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Inceleme Bolgesi <span className="text-red-500">*</span>
               </label>
               <div className="flex gap-3 flex-wrap">
@@ -529,7 +529,7 @@ export default function AgentPage() {
             {/* Yas + Cinsiyet */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Yas</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Yas</label>
                 <input
                   type="number"
                   min={0}
@@ -537,15 +537,15 @@ export default function AgentPage() {
                   value={form.age}
                   onChange={(e) => set("age", e.target.value)}
                   placeholder="Ornek: 58"
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">Cinsiyet</label>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Cinsiyet</label>
                 <select
                   value={form.gender}
                   onChange={(e) => set("gender", e.target.value)}
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 >
                   <option value="">Belirtilmemis</option>
                   <option value="Erkek">Erkek</option>
@@ -556,7 +556,7 @@ export default function AgentPage() {
 
             {/* Endikasyon */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Endikasyon / Klinik Soru <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -564,13 +564,13 @@ export default function AgentPage() {
                 onChange={(e) => set("indication", e.target.value)}
                 rows={2}
                 placeholder="Ornek: Karacigerde fokal lezyon – HCC ekarte edilmesi istenmistir. Bilinen HCV(+) siroz."
-                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
               />
             </div>
 
             {/* Kontrast */}
             <div>
-              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-zinc-700 mb-2">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 <input
                   type="checkbox"
                   checked={form.contrast}
@@ -585,7 +585,7 @@ export default function AgentPage() {
                   value={form.contrast_agent}
                   onChange={(e) => set("contrast_agent", e.target.value)}
                   placeholder="Kontrast ajani (orn: Gadoxetate / Primovist, Gadobutrol)"
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               )}
             </div>
@@ -593,7 +593,7 @@ export default function AgentPage() {
             {/* Siroz + Risk faktorleri */}
             {showAbdomen && (
               <div>
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-zinc-700 mb-2">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   <input
                     type="checkbox"
                     checked={form.cirrhosis}
@@ -603,7 +603,7 @@ export default function AgentPage() {
                   Siroz / Kronik karaciger hastaligi mevcut
                 </label>
                 {form.cirrhosis && (
-                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                  <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded px-2 py-1">
                     Siroz varliginda LI-RADS skorlamasi aktif olur. Lezyon ozellikleri kritik onem tasir.
                   </p>
                 )}
@@ -611,7 +611,7 @@ export default function AgentPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Risk Faktorleri
               </label>
               <input
@@ -619,13 +619,13 @@ export default function AgentPage() {
                 value={form.risk_factors}
                 onChange={(e) => set("risk_factors", e.target.value)}
                 placeholder="Ornek: HBsAg(+), AFP 42 ng/mL, DM, hipertansiyon, alkol"
-                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
               />
             </div>
 
             {/* Ek notlar */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                 Ek Klinik Not / Onceki Tetkik
               </label>
               <textarea
@@ -633,12 +633,12 @@ export default function AgentPage() {
                 onChange={(e) => set("notes", e.target.value)}
                 rows={2}
                 placeholder="Ornek: 6 ay once cekilen MRI'da segment 6'da 12 mm lezyon izlenmisti."
-                className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
               />
             </div>
 
             {/* Lab Sonuçları */}
-            <div className="border-t border-zinc-200 pt-4">
+            <div className="border-t border-zinc-200 dark:border-zinc-700 pt-4">
               <LabPanel
                 labs={labResults}
                 onAdd={(lab) => setLabResults(prev => [...prev, lab])}
@@ -648,13 +648,13 @@ export default function AgentPage() {
 
             {/* Prior Karşılaştırma */}
             {priorCases.length > 0 && (
-              <div className="border-t border-zinc-200 pt-4">
+              <div className="border-t border-zinc-200 dark:border-zinc-700 pt-4">
                 <PriorCasesPanel
                   priorCases={priorCases}
                   onSelect={() => setPriorIncluded(true)}
                 />
                 {priorIncluded && (
-                  <p className="text-xs text-green-600 mt-1">Onceki vakalar AI analizine dahil edildi.</p>
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-1">Onceki vakalar AI analizine dahil edildi.</p>
                 )}
               </div>
             )}
@@ -668,7 +668,7 @@ export default function AgentPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 Mevcut MRI Sekanslari
               </label>
               <SequenceSelector
@@ -676,7 +676,7 @@ export default function AgentPage() {
                 selected={form.sequences}
                 onChange={(s) => set("sequences", s)}
               />
-              <p className="text-xs text-zinc-400 mt-1">Mevcut sekans(lar)i secin</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Mevcut sekans(lar)i secin</p>
             </div>
           </CardContent>
         </Card>
@@ -696,7 +696,7 @@ export default function AgentPage() {
                   onChange={(e) => set("liver_parenchyma", e.target.value)}
                   rows={2}
                   placeholder="orn: Boyut normal (~15 cm). Parankim homojen / noduler siroz paterni. Steato yok. Portal ven acik."
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
 
@@ -733,7 +733,7 @@ export default function AgentPage() {
                   onChange={(e) => set("other_organs", e.target.value)}
                   rows={3}
                   placeholder={"Safra kesesi: Normal / Tas(+) / Duvar kalinlasmasi\nPankreas: Normal boyut, Wirsung normal\nDalak: 11 cm, homojen\nBobrekler: Bilateral normal boyut, kist(-)\nAdrenal: Normal"}
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
 
@@ -745,7 +745,7 @@ export default function AgentPage() {
                   onChange={(e) => set("vascular", e.target.value)}
                   rows={2}
                   placeholder="orn: Portal ven acik, hepatik venler normal. Asit yok. LAP yok."
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
             </CardContent>
@@ -768,7 +768,7 @@ export default function AgentPage() {
                   onChange={(e) => set("brain_general", e.target.value)}
                   rows={3}
                   placeholder={"orn: Serebral hemisferler simetrik. Gri-beyaz madde farklilasma normal.\nVentrikuler sistem normal boyutta, simetrik.\nOrta hat yapilarinda kayma yok."}
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
 
@@ -805,7 +805,7 @@ export default function AgentPage() {
                   onChange={(e) => set("brain_other", e.target.value)}
                   rows={2}
                   placeholder="orn: Beyaz cevherde T2/FLAIR hiperintens odaklar. SWI'da mikrokanama. Sinuslerde retansiyon kisti."
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
             </CardContent>
@@ -826,7 +826,7 @@ export default function AgentPage() {
                   onChange={(e) => set("spine_general", e.target.value)}
                   rows={3}
                   placeholder={"orn: Lomber lordoz duzlesmis. L4-L5 ve L5-S1 disk yukseklikleri azalmis.\nSpinal kord normal kalibre ve sinyal ozelliklerinde.\nKonus medullaris L1 seviyesinde sonlaniyor."}
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
               <div>
@@ -852,7 +852,7 @@ export default function AgentPage() {
                   onChange={(e) => set("spine_other", e.target.value)}
                   rows={2}
                   placeholder="orn: Faset artropati, ligamentum flavum hipertrofisi, sakroiliit bulgulari..."
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
             </CardContent>
@@ -873,7 +873,7 @@ export default function AgentPage() {
                   onChange={(e) => set("thorax_general", e.target.value)}
                   rows={3}
                   placeholder={"orn: Akciger parankim penceresi: bilateral buzlu cam alanlari.\nMediasten: patolojik LAP yok.\nPlevra: bilateral minimal efuzyon.\nKardiyak siluet normal."}
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
               <div>
@@ -899,7 +899,7 @@ export default function AgentPage() {
                   onChange={(e) => set("thorax_other", e.target.value)}
                   rows={2}
                   placeholder="orn: Plevral efuzyon, perikardial efuzyon, pulmoner emboli, aort anevrizmas..."
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
             </CardContent>
@@ -922,7 +922,7 @@ export default function AgentPage() {
                   placeholder={form.gender === "Kadin"
                     ? "orn: Uterus antever pozisyonda, normal boyutta. Overler bilateral normal.\nEndometrium kalinligi 8mm, homojen.\nDouglas'ta minimal sivi."
                     : "orn: Prostat boyut: 45cc. Periferik zon homojen.\nSeminal vezikuller simetrik.\nMesane duvari duzgun."}
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
               <div>
@@ -949,7 +949,7 @@ export default function AgentPage() {
                   onChange={(e) => set("pelvis_other", e.target.value)}
                   rows={2}
                   placeholder="orn: Pelvik LAP, kemik metastazi, asit, endometriozis implantlari..."
-                  className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                  className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                 />
               </div>
             </CardContent>
@@ -963,7 +963,7 @@ export default function AgentPage() {
           </CardHeader>
           <CardContent>
             <DicomDropzone files={dicomFiles} onFiles={setDicomFiles} />
-            <p className="text-xs text-zinc-400 mt-2">
+            <p className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-500 mt-2">
               Goruntu yuklerseniz ajan hem metin bulgularini hem de goruntuyu birlikte degerlendirir.
             </p>
           </CardContent>
@@ -992,7 +992,7 @@ export default function AgentPage() {
           return (
             <div className="space-y-1">
               {warnings.map((w, i) => (
-                <div key={i} className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-1.5">
+                <div key={i} className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-1.5">
                   {w}
                 </div>
               ))}
@@ -1002,7 +1002,7 @@ export default function AgentPage() {
 
         {/* ─── Hata & Submit ──────────────────────────────────────────── */}
         {error && (
-          <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+          <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-md px-3 py-2">
             {error}
           </div>
         )}
@@ -1012,7 +1012,7 @@ export default function AgentPage() {
             {loading ? "Ajan analiz ediyor..." : "Analizi Baslat"}
           </Button>
           {loading && (
-            <span className="text-xs text-zinc-400 self-center">
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-500 self-center">
               Bu islem 30-60 saniye surebilir
             </span>
           )}
@@ -1050,11 +1050,11 @@ export default function AgentPage() {
                 key={i}
                 className={`text-sm rounded-md px-3 py-2 ${
                   msg.role === "user"
-                    ? "bg-zinc-100 text-zinc-800 ml-8"
-                    : "bg-white border border-zinc-200 mr-4"
+                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 ml-8"
+                    : "bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 mr-4"
                 }`}
               >
-                <div className="text-xs text-zinc-400 mb-1">
+                <div className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-500 mb-1">
                   {msg.role === "user" ? "Siz" : "Radyolog Ajan"}
                 </div>
                 {msg.role === "assistant" ? (
@@ -1067,8 +1067,8 @@ export default function AgentPage() {
 
             {/* Aktif streaming yanit */}
             {followupStream && (
-              <div className="text-sm bg-white border border-zinc-200 rounded-md px-3 py-2 mr-4">
-                <div className="text-xs text-zinc-400 mb-1">
+              <div className="text-sm bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-md px-3 py-2 mr-4">
+                <div className="text-xs text-zinc-400 dark:text-zinc-500 dark:text-zinc-500 mb-1">
                   Radyolog Ajan
                   <span className="inline-block w-1.5 h-3 bg-zinc-700 animate-pulse rounded-sm ml-1" />
                 </div>
@@ -1084,7 +1084,7 @@ export default function AgentPage() {
                 onChange={(e) => setFollowupQ(e.target.value)}
                 placeholder="Takip sorusu sorun... (orn: Bu lezyon FNH olabilir mi?)"
                 disabled={followupLoading}
-                className="flex-1 border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                className="flex-1 border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
               />
               <Button type="submit" disabled={followupLoading || !followupQ.trim()}>
                 {followupLoading ? "..." : "Sor"}
@@ -1111,26 +1111,26 @@ export default function AgentPage() {
           <CardContent className="space-y-4">
             {savedPack ? (
               <div className="space-y-3">
-                <div className="bg-green-50 border border-green-200 rounded-md px-3 py-2 text-sm text-green-800">
+                <div className="bg-green-50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 rounded-md px-3 py-2 text-sm text-green-800 dark:text-green-300">
                   Vaka <strong>{savedPack.case_id}</strong> basariyla kaydedildi.
                 </div>
 
                 {savedPack.content?.lirads && showAbdomen && (
-                  <div className="bg-zinc-50 border border-zinc-200 rounded-md p-3 space-y-2">
+                  <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-md p-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-zinc-700">LI-RADS Skoru:</span>
+                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">LI-RADS Skoru:</span>
                       <LiradsBadge
                         category={savedPack.content.lirads.category}
                         label={savedPack.content.lirads.label}
                       />
                     </div>
                     {savedPack.content.lirads.applied_criteria?.length > 0 && (
-                      <div className="text-xs text-zinc-500">
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
                         Uygulanan kriterler: {savedPack.content.lirads.applied_criteria.join(", ")}
                       </div>
                     )}
                     {savedPack.content.lirads.ancillary_favor_hcc?.length > 0 && (
-                      <div className="text-xs text-zinc-500">
+                      <div className="text-xs text-zinc-500 dark:text-zinc-400">
                         HCC lehine yardimci: {savedPack.content.lirads.ancillary_favor_hcc.join(", ")}
                       </div>
                     )}
@@ -1142,7 +1142,7 @@ export default function AgentPage() {
                   <span className="text-zinc-400">|</span>
                   <Link
                     href={`/cases/${savedPack.case_id}`}
-                    className="text-zinc-600 hover:underline"
+                    className="text-zinc-600 dark:text-zinc-400 hover:underline"
                   >
                     Vakaya git &rarr;
                   </Link>
@@ -1152,7 +1152,7 @@ export default function AgentPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1">
+                    <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                       Vaka ID <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -1160,11 +1160,11 @@ export default function AgentPage() {
                       value={caseId}
                       onChange={(e) => setCaseId(e.target.value)}
                       placeholder="orn: CASE-1001"
-                      className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                      className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-zinc-500 mb-1">
+                    <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                       Hasta ID (opsiyonel)
                     </label>
                     <input
@@ -1172,7 +1172,7 @@ export default function AgentPage() {
                       value={patientId}
                       onChange={(e) => setPatientId(e.target.value)}
                       placeholder="orn: P-00001"
-                      className="w-full border border-zinc-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+                      className="w-full border border-zinc-300 dark:border-zinc-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 dark:focus:ring-zinc-400"
                     />
                   </div>
                 </div>
@@ -1180,7 +1180,7 @@ export default function AgentPage() {
                   <Button onClick={handleSave} disabled={saving}>
                     {saving ? "Kaydediliyor..." : "Kaydet & LI-RADS Skorla"}
                   </Button>
-                  <span className="text-xs text-zinc-400">
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500">
                     Ajan raporu + LI-RADS skoru + imzali audit pack olusturulur
                   </span>
                 </div>
