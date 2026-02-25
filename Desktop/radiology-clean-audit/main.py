@@ -81,15 +81,16 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         content={"detail": "Çok fazla istek. Lütfen bekleyin."},
     )
 
-ALLOWED_ORIGINS = os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000,https://radiology-clean-audit-rd4p.vercel.app"
-).split(",")
+_origins_env = os.getenv("ALLOWED_ORIGINS", "").strip()
+if _origins_env == "*" or not _origins_env:
+    ALLOWED_ORIGINS = ["*"]
+else:
+    ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=True if ALLOWED_ORIGINS != ["*"] else False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
