@@ -8,7 +8,8 @@ import LiradsBadge from "@/components/LiradsBadge";
 import Breadcrumb from "@/components/Breadcrumb";
 import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { SkeletonList } from "@/components/Skeleton";
-import { FormField, Input, Select, Textarea } from "@/components/ui/FormField";
+import { FormField, Select, Textarea } from "@/components/ui/FormField";
+import { Combobox } from "@/components/ui/Combobox";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE, LIRADS_ORDER } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
@@ -106,6 +107,10 @@ export default function SecondReadingPage() {
   const [completedLoading, setCompletedLoading] = useState(true);
   const [completedErr, setCompletedErr] = useState<string | null>(null);
 
+  /* --- Combobox options for assignment form --- */
+  const [caseOptions, setCaseOptions] = useState<{ value: string; label: string }[]>([]);
+  const [readerOptions, setReaderOptions] = useState<{ value: string; label: string }[]>([]);
+
   /* ---------- Auth check ---------- */
 
   useEffect(() => {
@@ -116,6 +121,8 @@ export default function SecondReadingPage() {
     }
     fetchPending();
     fetchCompleted();
+    fetchCaseOptions();
+    fetchReaderOptions();
   }, []);
 
   /* ---------- Fetchers ---------- */
@@ -184,6 +191,47 @@ export default function SecondReadingPage() {
     } finally {
       setCaseLoading(false);
     }
+  }
+
+  async function fetchCaseOptions() {
+    try {
+      const res = await fetch(`${API_BASE}/cases`, { headers: authHeaders() });
+      if (!res.ok) return;
+      const data = await res.json();
+      const cases = Array.isArray(data) ? data : [];
+      setCaseOptions(
+        cases.map((c: { case_id: string; category?: string }) => ({
+          value: c.case_id,
+          label: c.case_id,
+          description: c.category ? `Kategori: ${c.category}` : undefined,
+        }))
+      );
+    } catch { /* ignore */ }
+  }
+
+  async function fetchReaderOptions() {
+    try {
+      // Try fetching users list; fall back to extracting from completed readings
+      const res = await fetch(`${API_BASE}/users`, { headers: authHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        const users = Array.isArray(data) ? data : [];
+        setReaderOptions(
+          users.map((u: { username: string; full_name?: string }) => ({
+            value: u.username,
+            label: u.full_name ? `${u.full_name} (${u.username})` : u.username,
+          }))
+        );
+        return;
+      }
+    } catch { /* ignore */ }
+    // Fallback: extract unique readers from pending + completed readings
+    const allReaders = new Set<string>();
+    pendingList.forEach((r) => allReaders.add(r.reader_username));
+    completedList.forEach((r) => allReaders.add(r.reader_username));
+    setReaderOptions(
+      Array.from(allReaders).map((u) => ({ value: u, label: u }))
+    );
   }
 
   /* ---------- Handlers ---------- */
@@ -517,20 +565,22 @@ export default function SecondReadingPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormField label="Vaka ID" required>
-              <Input
-                type="text"
+              <Combobox
+                options={caseOptions}
                 value={assignCaseId}
-                onChange={(e) => setAssignCaseId(e.target.value)}
-                placeholder="orn. CASE1001"
+                onChange={setAssignCaseId}
+                placeholder="Vaka ara ve sec..."
+                emptyMessage="Vaka bulunamadi"
               />
             </FormField>
 
             <FormField label="Okuyucu Kullanici Adi" required>
-              <Input
-                type="text"
+              <Combobox
+                options={readerOptions}
                 value={assignReader}
-                onChange={(e) => setAssignReader(e.target.value)}
-                placeholder="orn. dr_mehmet"
+                onChange={setAssignReader}
+                placeholder="Okuyucu ara ve sec..."
+                emptyMessage="Okuyucu bulunamadi"
               />
             </FormField>
 

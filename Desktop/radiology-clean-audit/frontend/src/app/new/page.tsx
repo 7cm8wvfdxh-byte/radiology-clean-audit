@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { FormField, Input } from "@/components/ui/FormField";
+import { FormField, Select } from "@/components/ui/FormField";
 import { Toggle } from "@/components/ui/Toggle";
+import { SizeSelector } from "@/components/ui/SizeSelector";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
 
 type FormState = {
-  case_id: string;
+  case_prefix: string;
+  case_number: string;
   lesion_size_mm: string;
   cirrhosis: boolean;
   arterial_hyperenhancement: boolean;
@@ -20,8 +22,22 @@ type FormState = {
   delayed_capsule: boolean;
 };
 
+const CASE_PREFIXES = [
+  { value: "CASE", label: "CASE" },
+  { value: "LR", label: "LR" },
+  { value: "HCC", label: "HCC" },
+  { value: "MRI", label: "MRI" },
+  { value: "CT", label: "CT" },
+];
+
+const CASE_NUMBERS = Array.from({ length: 50 }, (_, i) => {
+  const num = (1001 + i).toString();
+  return { value: num, label: num };
+});
+
 const defaultForm: FormState = {
-  case_id: "",
+  case_prefix: "CASE",
+  case_number: "",
   lesion_size_mm: "",
   cirrhosis: false,
   arterial_hyperenhancement: false,
@@ -36,34 +52,55 @@ export default function NewCase() {
   const [error, setError] = useState<string | null>(null);
   const [authed, setAuthed] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [existingCases, setExistingCases] = useState<string[]>([]);
 
   useEffect(() => {
     if (!getToken()) {
       router.replace("/");
     } else {
       setAuthed(true);
+      // Mevcut vakalari cek - otomatik numara onerisi icin
+      fetch(`${API_BASE}/cases`, { headers: authHeaders() })
+        .then((r) => r.ok ? r.json() : [])
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setExistingCases(data.map((c: { case_id: string }) => c.case_id));
+          }
+        })
+        .catch(() => {});
     }
   }, []);
+
+  // Sonraki uygun numarayi bul
+  useEffect(() => {
+    if (existingCases.length > 0 && !form.case_number) {
+      const prefix = form.case_prefix;
+      const usedNumbers = existingCases
+        .filter((id) => id.startsWith(prefix))
+        .map((id) => parseInt(id.replace(prefix, ""), 10))
+        .filter((n) => !isNaN(n));
+      const maxNum = usedNumbers.length > 0 ? Math.max(...usedNumbers) : 1000;
+      setForm((f) => ({ ...f, case_number: String(maxNum + 1) }));
+    }
+  }, [existingCases, form.case_prefix]);
+
+  const caseId = `${form.case_prefix}${form.case_number}`;
 
   function handleCheck(field: keyof FormState) {
     setForm((f) => ({ ...f, [field]: !f[field] }));
   }
 
-  function handleText(field: keyof FormState, value: string) {
-    setForm((f) => ({ ...f, [field]: value }));
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => { const next = { ...prev }; delete next[field]; return next; });
-    }
-  }
-
   function validate(): boolean {
     const errors: Record<string, string> = {};
-    if (!form.case_id.trim()) {
-      errors.case_id = "Case ID zorunlu.";
+    if (!form.case_number) {
+      errors.case_number = "Vaka numarasi secin.";
+    }
+    if (existingCases.includes(caseId)) {
+      errors.case_number = "Bu vaka ID zaten mevcut.";
     }
     const size = parseInt(form.lesion_size_mm, 10);
-    if (!form.lesion_size_mm.trim()) {
-      errors.lesion_size_mm = "Lezyon boyutu zorunlu.";
+    if (!form.lesion_size_mm) {
+      errors.lesion_size_mm = "Lezyon boyutu secin.";
     } else if (isNaN(size) || size < 0 || size > 200) {
       errors.lesion_size_mm = "Lezyon boyutu 0-200 mm arasinda olmali.";
     }
@@ -89,7 +126,7 @@ export default function NewCase() {
     setLoading(true);
     try {
       const res = await fetch(
-        `${API_BASE}/analyze/${encodeURIComponent(form.case_id.trim())}`,
+        `${API_BASE}/analyze/${encodeURIComponent(caseId)}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -101,7 +138,7 @@ export default function NewCase() {
         const detail = await res.json().catch(() => ({}));
         throw new Error(detail?.detail ?? `HTTP ${res.status}`);
       }
-      router.push(`/cases/${encodeURIComponent(form.case_id.trim())}`);
+      router.push(`/cases/${encodeURIComponent(caseId)}`);
     } catch (e: unknown) {
       setError(getErrorMessage(e));
     } finally {
@@ -130,31 +167,97 @@ export default function NewCase() {
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-6" noValidate>
-            {/* Case ID */}
-            <FormField label="Case ID" required error={fieldErrors.case_id}>
-              <Input
-                type="text"
-                value={form.case_id}
-                onChange={(e) => handleText("case_id", e.target.value)}
-                placeholder="Ornek: CASE1001"
-                error={!!fieldErrors.case_id}
-              />
-            </FormField>
+            {/* Case ID - On ek + Numara secimi */}
+            <div>
+              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Vaka ID <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2">
+                <div className="w-32">
+                  <Select
+                    value={form.case_prefix}
+                    onChange={(e) => setForm((f) => ({ ...f, case_prefix: e.target.value, case_number: "" }))}
+                  >
+                    {CASE_PREFIXES.map((p) => (
+                      <option key={p.value} value={p.value}>{p.label}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div className="flex-1">
+                  <Select
+                    value={form.case_number}
+                    onChange={(e) => {
+                      setForm((f) => ({ ...f, case_number: e.target.value }));
+                      if (fieldErrors.case_number) {
+                        setFieldErrors((prev) => { const next = { ...prev }; delete next.case_number; return next; });
+                      }
+                    }}
+                    error={!!fieldErrors.case_number}
+                  >
+                    <option value="">Numara secin...</option>
+                    {CASE_NUMBERS.map((n) => {
+                      const fullId = `${form.case_prefix}${n.value}`;
+                      const exists = existingCases.includes(fullId);
+                      return (
+                        <option key={n.value} value={n.value} disabled={exists}>
+                          {n.label}{exists ? " (mevcut)" : ""}
+                        </option>
+                      );
+                    })}
+                  </Select>
+                </div>
+              </div>
+              {form.case_number && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">Olusturulacak ID:</span>
+                  <span className={`text-sm font-bold px-2.5 py-0.5 rounded-lg ${
+                    existingCases.includes(caseId)
+                      ? "bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400"
+                      : "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
+                  }`}>
+                    {caseId}
+                  </span>
+                  {existingCases.includes(caseId) && (
+                    <span className="text-xs text-red-500">Bu ID zaten mevcut</span>
+                  )}
+                </div>
+              )}
+              {fieldErrors.case_number && (
+                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {fieldErrors.case_number}
+                </p>
+              )}
+            </div>
 
-            {/* Lezyon boyutu */}
-            <FormField label="Lezyon Boyutu (mm)" required error={fieldErrors.lesion_size_mm} hint="0 ile 200 mm arasinda bir deger girin">
-              <Input
-                type="number"
-                min={0}
-                max={200}
+            {/* Lezyon boyutu - Slider + Preset butonlar */}
+            <div>
+              <label className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Lezyon Boyutu <span className="text-red-500">*</span>
+              </label>
+              <SizeSelector
                 value={form.lesion_size_mm}
-                onChange={(e) => handleText("lesion_size_mm", e.target.value)}
-                placeholder="Ornek: 22"
+                onChange={(val) => {
+                  setForm((f) => ({ ...f, lesion_size_mm: val }));
+                  if (fieldErrors.lesion_size_mm) {
+                    setFieldErrors((prev) => { const next = { ...prev }; delete next.lesion_size_mm; return next; });
+                  }
+                }}
                 error={!!fieldErrors.lesion_size_mm}
               />
-            </FormField>
+              {fieldErrors.lesion_size_mm && (
+                <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {fieldErrors.lesion_size_mm}
+                </p>
+              )}
+            </div>
 
-            {/* Klinik bulgular */}
+            {/* Klinik bulgular - Toggle */}
             <fieldset>
               <legend className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Klinik Bulgular</legend>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
