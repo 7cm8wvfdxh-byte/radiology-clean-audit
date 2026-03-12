@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import LiradsBadge from "@/components/LiradsBadge";
 import Breadcrumb from "@/components/Breadcrumb";
 import { SkeletonCard } from "@/components/Skeleton";
+import { Select } from "@/components/ui/FormField";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
@@ -22,9 +23,12 @@ function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
   if (!data) {
     return (
       <Card className="flex-1">
-        <CardContent className="pt-4">
-          <div className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-8">
-            {label} secilmedi
+        <CardContent className="pt-5">
+          <div className="text-center py-12">
+            <svg className="w-10 h-10 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <p className="text-sm text-zinc-400 dark:text-zinc-500">{label} secilmedi</p>
           </div>
         </CardContent>
       </Card>
@@ -46,11 +50,11 @@ function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
           )}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4">
         {/* Karar */}
-        <div>
+        <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-3">
           <div className="text-xs text-zinc-500 dark:text-zinc-400">Karar</div>
-          <div className="text-sm font-medium dark:text-zinc-100">{content.decision ?? "-"}</div>
+          <div className="text-sm font-semibold dark:text-zinc-100">{content.decision ?? "-"}</div>
         </div>
 
         {/* Tarih & versiyon */}
@@ -67,52 +71,52 @@ function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
 
         {/* DSL ozellikleri */}
         <div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Lezyon Ozellikleri</div>
-          <div className="grid grid-cols-2 gap-1 text-xs">
-            <div className="flex justify-between">
+          <div className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-2">Lezyon Ozellikleri</div>
+          <div className="grid grid-cols-2 gap-1.5 text-xs">
+            <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
               <span className="text-zinc-500 dark:text-zinc-400">APHE:</span>
-              <span className={dsl.arterial_phase?.hyperenhancement ? "text-red-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
+              <span className={dsl.arterial_phase?.hyperenhancement ? "text-red-600 font-bold" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.arterial_phase?.hyperenhancement ? "Var" : "Yok"}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
               <span className="text-zinc-500 dark:text-zinc-400">Washout:</span>
-              <span className={dsl.portal_phase?.washout ? "text-red-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
+              <span className={dsl.portal_phase?.washout ? "text-red-600 font-bold" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.portal_phase?.washout ? "Var" : "Yok"}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
               <span className="text-zinc-500 dark:text-zinc-400">Kapsul:</span>
-              <span className={dsl.delayed_phase?.capsule ? "text-red-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
+              <span className={dsl.delayed_phase?.capsule ? "text-red-600 font-bold" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.delayed_phase?.capsule ? "Var" : "Yok"}
               </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
               <span className="text-zinc-500 dark:text-zinc-400">Boyut:</span>
-              <span className="font-medium dark:text-zinc-200">{dsl.lesion_size_mm ?? 0} mm</span>
+              <span className="font-bold dark:text-zinc-200">{dsl.lesion_size_mm ?? 0} mm</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
               <span className="text-zinc-500 dark:text-zinc-400">Siroz:</span>
-              <span className={dsl.cirrhosis ? "text-amber-600 font-medium" : "text-zinc-400 dark:text-zinc-500"}>
+              <span className={dsl.cirrhosis ? "text-amber-600 font-bold" : "text-zinc-400 dark:text-zinc-500"}>
                 {dsl.cirrhosis ? "Var" : "Yok"}
               </span>
             </div>
             {dsl.rim_aphe && (
-              <div className="flex justify-between">
+              <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
                 <span className="text-zinc-500 dark:text-zinc-400">Rim APHE:</span>
-                <span className="text-purple-600 font-medium">Var</span>
+                <span className="text-purple-600 font-bold">Var</span>
               </div>
             )}
             {dsl.tumor_in_vein && (
-              <div className="flex justify-between">
+              <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
                 <span className="text-zinc-500 dark:text-zinc-400">Tumor in Vein:</span>
-                <span className="text-red-700 font-medium">Var</span>
+                <span className="text-red-700 font-bold">Var</span>
               </div>
             )}
             {dsl.infiltrative && (
-              <div className="flex justify-between">
+              <div className="flex justify-between bg-zinc-50 dark:bg-zinc-800/30 rounded-lg px-2.5 py-1.5">
                 <span className="text-zinc-500 dark:text-zinc-400">Infiltratif:</span>
-                <span className="text-purple-600 font-medium">Var</span>
+                <span className="text-purple-600 font-bold">Var</span>
               </div>
             )}
           </div>
@@ -121,10 +125,10 @@ function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
         {/* Uygulanan kriterler */}
         {lirads.applied_criteria?.length > 0 && (
           <div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Uygulanan Kriterler</div>
-            <div className="flex flex-wrap gap-1">
+            <div className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-2">Uygulanan Kriterler</div>
+            <div className="flex flex-wrap gap-1.5">
               {lirads.applied_criteria.map((c: string) => (
-                <span key={c} className="text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 px-1.5 py-0.5 rounded">
+                <span key={c} className="text-xs bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full font-medium">
                   {c}
                 </span>
               ))}
@@ -135,7 +139,7 @@ function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
         {/* Klinik bilgiler */}
         {clinicalData && (
           <div>
-            <div className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Klinik</div>
+            <div className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1">Klinik</div>
             <div className="text-xs text-zinc-600 dark:text-zinc-300 space-y-0.5">
               {clinicalData.age && <div>Yas: {clinicalData.age}</div>}
               {clinicalData.gender && <div>Cinsiyet: {clinicalData.gender}</div>}
@@ -145,7 +149,10 @@ function CasePanel({ data, label }: { data: AuditPack | null; label: string }) {
         )}
 
         {/* Imza */}
-        <div className="text-xs text-zinc-400 dark:text-zinc-500 font-mono">
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 font-mono flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
           {data.signature?.slice(0, 16)}...
         </div>
       </CardContent>
@@ -239,22 +246,21 @@ export default function ComparePage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 animate-fade-in">
       <div>
         <Breadcrumb items={[{ label: "Ana Sayfa", href: "/" }, { label: "Karsilastirma" }]} />
-        <h1 className="text-xl font-semibold mt-2 dark:text-zinc-100">Vaka Karsilastirma</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Iki vakayi yan yana karsilastirin</p>
+        <h1 className="text-2xl font-bold mt-2 dark:text-zinc-100 tracking-tight">Vaka Karsilastirma</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Iki vakayi yan yana karsilastirin</p>
       </div>
 
       {/* Secim */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="select-left" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">Sol Vaka</label>
-          <select
+          <label htmlFor="select-left" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1.5">Sol Vaka</label>
+          <Select
             id="select-left"
             value={caseIdA}
-            onChange={(e) => selectA(e.target.value)}
-            className="w-full border border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => selectA(e.target.value)}
           >
             <option value="">Secin...</option>
             {cases.map((c) => (
@@ -262,15 +268,14 @@ export default function ComparePage() {
                 {c.case_id} {c.decision ? `(${c.decision})` : ""}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
-          <label htmlFor="select-right" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">Sag Vaka</label>
-          <select
+          <label htmlFor="select-right" className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1.5">Sag Vaka</label>
+          <Select
             id="select-right"
             value={caseIdB}
-            onChange={(e) => selectB(e.target.value)}
-            className="w-full border border-zinc-300 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-500"
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => selectB(e.target.value)}
           >
             <option value="">Secin...</option>
             {cases.map((c) => (
@@ -278,12 +283,15 @@ export default function ComparePage() {
                 {c.case_id} {c.decision ? `(${c.decision})` : ""}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 
       {err && (
-        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="alert">
+          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           {err}
         </div>
       )}
@@ -297,21 +305,33 @@ export default function ComparePage() {
 
       {/* Fark ozeti */}
       {dataA && dataB && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
+        <Card className={diffs.length === 0 ? "border-emerald-200/60 dark:border-emerald-800/40" : "border-amber-200/60 dark:border-amber-800/40"}>
+          <CardHeader className={diffs.length === 0 ? "bg-emerald-50/30 dark:bg-emerald-900/10" : "bg-amber-50/30 dark:bg-amber-900/10"}>
+            <CardTitle className="flex items-center gap-2">
+              {diffs.length === 0 ? (
+                <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              )}
               {diffs.length === 0 ? "Fark Yok" : `${diffs.length} Fark Bulundu`}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {diffs.length === 0 ? (
-              <div className="text-sm text-green-700 dark:text-green-400">
+              <div className="text-sm text-emerald-700 dark:text-emerald-400">
                 Her iki vaka ayni LI-RADS ozelliklerine sahip.
               </div>
             ) : (
-              <ul className="space-y-1">
+              <ul className="space-y-1.5">
                 {diffs.map((d, i) => (
-                  <li key={i} className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded px-2 py-1">
+                  <li key={i} className="text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2 flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01" />
+                    </svg>
                     {d}
                   </li>
                 ))}
