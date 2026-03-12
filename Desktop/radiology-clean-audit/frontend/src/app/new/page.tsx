@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { FormField, Input } from "@/components/ui/FormField";
+import { Toggle } from "@/components/ui/Toggle";
 import Breadcrumb from "@/components/Breadcrumb";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
@@ -156,35 +157,35 @@ export default function NewCase() {
             {/* Klinik bulgular */}
             <fieldset>
               <legend className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Klinik Bulgular</legend>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {(
-                  [
-                    { field: "cirrhosis", label: "Siroz (Cirrhosis)", icon: "M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" },
-                    { field: "arterial_hyperenhancement", label: "Arteriyel hiperenhansman", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
-                    { field: "portal_washout", label: "Portal/venoz washout", icon: "M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" },
-                    { field: "delayed_capsule", label: "Kapsul (gec faz)", icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" },
-                  ] as { field: keyof FormState; label: string; icon: string }[]
-                ).map(({ field, label, icon }) => (
-                  <label
-                    key={field}
-                    className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                      form[field]
-                        ? "bg-indigo-50 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-700"
-                        : "bg-white border-zinc-200 hover:border-zinc-300 dark:bg-zinc-800/50 dark:border-zinc-700 dark:hover:border-zinc-600"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!!form[field]}
-                      onChange={() => handleCheck(field)}
-                      className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-600 text-indigo-600"
-                    />
-                    <svg className={`w-4 h-4 flex-shrink-0 ${form[field] ? "text-indigo-500" : "text-zinc-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={icon} />
-                    </svg>
-                    <span className={`text-sm ${form[field] ? "text-indigo-700 dark:text-indigo-300 font-medium" : "text-zinc-700 dark:text-zinc-300"}`}>{label}</span>
-                  </label>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Toggle
+                  checked={form.cirrhosis}
+                  onChange={() => handleCheck("cirrhosis")}
+                  label="Siroz (Cirrhosis)"
+                  description="Karaciger sirozu mevcut"
+                  icon="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+                <Toggle
+                  checked={form.arterial_hyperenhancement}
+                  onChange={() => handleCheck("arterial_hyperenhancement")}
+                  label="Arteriyel hiperenhansman"
+                  description="Arteriyel fazda parlama"
+                  icon="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+                <Toggle
+                  checked={form.portal_washout}
+                  onChange={() => handleCheck("portal_washout")}
+                  label="Portal/venoz washout"
+                  description="Portal fazda yikanma"
+                  icon="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                />
+                <Toggle
+                  checked={form.delayed_capsule}
+                  onChange={() => handleCheck("delayed_capsule")}
+                  label="Kapsul (gec faz)"
+                  description="Gecikme fazinda kapsul"
+                  icon="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
               </div>
             </fieldset>
 
