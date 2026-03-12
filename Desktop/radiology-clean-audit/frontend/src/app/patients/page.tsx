@@ -6,11 +6,24 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { FormField, Input, Select } from "@/components/ui/FormField";
+import { Combobox } from "@/components/ui/Combobox";
 import Breadcrumb from "@/components/Breadcrumb";
 import { SkeletonList } from "@/components/Skeleton";
 import { getToken, clearToken, authHeaders } from "@/lib/auth";
 import { API_BASE } from "@/lib/constants";
 import { getErrorMessage } from "@/lib/errors";
+
+const PATIENT_PREFIXES = [
+  { value: "P", label: "P" },
+  { value: "PT", label: "PT" },
+  { value: "H", label: "H" },
+  { value: "HCC", label: "HCC" },
+];
+
+const PATIENT_NUMBERS = Array.from({ length: 50 }, (_, i) => {
+  const num = String(1 + i).padStart(5, "0");
+  return { value: num, label: num };
+});
 
 type Patient = {
   patient_id: string;
@@ -21,14 +34,16 @@ type Patient = {
 };
 
 type CreateForm = {
-  patient_id: string;
+  patient_prefix: string;
+  patient_number: string;
   full_name: string;
   birth_date: string;
   gender: string;
 };
 
 const defaultForm: CreateForm = {
-  patient_id: "",
+  patient_prefix: "P",
+  patient_number: "",
   full_name: "",
   birth_date: "",
   gender: "U",
@@ -66,6 +81,24 @@ export default function PatientsPage() {
 
   useEffect(() => { fetchPatients(); }, []);
 
+  // Auto-suggest next patient number based on existing patients with same prefix
+  const suggestedNumber = (() => {
+    const prefix = form.patient_prefix;
+    const existing = patients
+      .filter((p) => p.patient_id.startsWith(prefix + "-"))
+      .map((p) => parseInt(p.patient_id.replace(prefix + "-", ""), 10))
+      .filter((n) => !isNaN(n));
+    const maxNum = existing.length > 0 ? Math.max(...existing) : 0;
+    return String(maxNum + 1).padStart(5, "0");
+  })();
+
+  // Build number options, putting suggested first
+  const numberOptions = (() => {
+    const suggested = { value: suggestedNumber, label: `${suggestedNumber} (Onerilen)` };
+    const rest = PATIENT_NUMBERS.filter((n) => n.value !== suggestedNumber);
+    return [suggested, ...rest];
+  })();
+
   function handleField(field: keyof CreateForm, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
     if (fieldErrors[field]) {
@@ -75,7 +108,8 @@ export default function PatientsPage() {
 
   function validate(): boolean {
     const errors: Record<string, string> = {};
-    if (!form.patient_id.trim()) errors.patient_id = "Hasta ID zorunlu.";
+    if (!form.patient_prefix) errors.patient_prefix = "Prefix zorunlu.";
+    if (!form.patient_number) errors.patient_number = "Numara zorunlu.";
     if (!form.full_name.trim()) errors.full_name = "Ad Soyad zorunlu.";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -88,8 +122,9 @@ export default function PatientsPage() {
 
     setFormLoading(true);
     try {
+      const composedId = `${form.patient_prefix}-${form.patient_number}`;
       const body: Record<string, string> = {
-        patient_id: form.patient_id.trim(),
+        patient_id: composedId,
         full_name: form.full_name.trim(),
         gender: form.gender,
       };
@@ -164,14 +199,33 @@ export default function PatientsPage() {
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4" noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField label="Hasta ID" required error={fieldErrors.patient_id}>
-                  <Input
-                    type="text"
-                    value={form.patient_id}
-                    onChange={(e) => handleField("patient_id", e.target.value)}
-                    placeholder="Ornek: P-00001"
-                    error={!!fieldErrors.patient_id}
-                  />
+                <FormField label="Hasta ID" required error={fieldErrors.patient_prefix || fieldErrors.patient_number}>
+                  <div className="flex gap-2">
+                    <div className="w-28">
+                      <Select
+                        value={form.patient_prefix}
+                        onChange={(e) => handleField("patient_prefix", e.target.value)}
+                      >
+                        {PATIENT_PREFIXES.map((p) => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </Select>
+                    </div>
+                    <div className="flex-1">
+                      <Combobox
+                        options={numberOptions}
+                        value={form.patient_number}
+                        onChange={(v) => handleField("patient_number", v)}
+                        placeholder="Numara sec..."
+                        error={!!fieldErrors.patient_number}
+                      />
+                    </div>
+                  </div>
+                  {form.patient_prefix && form.patient_number && (
+                    <div className="mt-1.5 text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+                      ID: {form.patient_prefix}-{form.patient_number}
+                    </div>
+                  )}
                 </FormField>
                 <FormField label="Ad Soyad" required error={fieldErrors.full_name}>
                   <Input
