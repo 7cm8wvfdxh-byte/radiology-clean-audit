@@ -20,13 +20,68 @@ code, pre {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Shimmer loading effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* Slide-down for mobile menu */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s ease-out forwards;
+}
+
 /* Smooth transition for dark mode */
 * {
-  transition-property: background-color, border-color, color;
+  transition-property: background-color, border-color, color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-in-out;
 }
 /* Opt out animations on elements that need fast interaction */
 button, a, input, select, textarea {
   transition-duration: 100ms;
+}
+
+/* Subtle page background pattern */
+.bg-grid-pattern {
+  background-image: radial-gradient(circle at 1px 1px, rgb(161 161 170 / 0.15) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .bg-grid-pattern {
+  background-image: radial-gradient(circle at 1px 1px, rgb(63 63 70 / 0.3) 1px, transparent 0);
+}
+
+/* Glass effect */
+.glass {
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* Focus ring style */
+:focus-visible {
+  outline: 2px solid rgb(99 102 241);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

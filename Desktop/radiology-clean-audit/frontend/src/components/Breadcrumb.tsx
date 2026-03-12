@@ -17,14 +17,16 @@ export default function Breadcrumb({ items }: BreadcrumbProps) {
         return (
           <span key={i} className="flex items-center gap-1.5">
             {i > 0 && (
-              <span className="text-zinc-300 dark:text-zinc-600" aria-hidden="true">/</span>
+              <svg className="w-3.5 h-3.5 text-zinc-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             )}
             {isLast || !item.href ? (
               <span className="font-medium text-zinc-900 dark:text-zinc-100">{item.label}</span>
             ) : (
               <Link
                 href={item.href}
-                className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors"
+                className="text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-indigo-400 transition-colors"
               >
                 {item.label}
               </Link>

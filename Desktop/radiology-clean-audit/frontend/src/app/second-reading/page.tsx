@@ -16,9 +16,9 @@ import { getErrorMessage } from "@/lib/errors";
 const LIRADS_OPTIONS = LIRADS_ORDER;
 
 const AGREEMENT_COLORS: Record<string, string> = {
-  agree: "bg-green-100 text-green-800",
-  disagree: "bg-red-100 text-red-800",
-  partial: "bg-yellow-100 text-yellow-800",
+  agree: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+  disagree: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  partial: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
 };
 
 const AGREEMENT_LABELS: Record<string, string> = {
@@ -60,10 +60,10 @@ type CaseData = {
 /* ---------- Helper Components ---------- */
 
 function AgreementBadge({ agreement }: { agreement: string }) {
-  const color = AGREEMENT_COLORS[agreement] || "bg-zinc-100 text-zinc-800";
+  const color = AGREEMENT_COLORS[agreement] || "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300";
   const label = AGREEMENT_LABELS[agreement] || agreement;
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${color}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold shadow-sm ${color}`}>
       {label}
     </span>
   );
@@ -305,12 +305,12 @@ export default function SecondReadingPage() {
   /* ---------- Render ---------- */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
         <Breadcrumb items={[{ label: "Ana Sayfa", href: "/" }, { label: "Ikinci Okuma" }]} />
-        <h1 className="text-xl font-semibold mt-2 dark:text-zinc-100">Ikinci Okuma Akisi</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <h1 className="text-2xl font-bold mt-2 dark:text-zinc-100 tracking-tight">Ikinci Okuma Akisi</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
           Kalite guvencesi icin ikinci radyolog degerlendirmesi
         </p>
       </div>
@@ -318,24 +318,37 @@ export default function SecondReadingPage() {
       {/* Section 1: Pending Reviews List */}
       <Card>
         <CardHeader>
-          <CardTitle>Bekleyen Degerlendirmeler</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Bekleyen Degerlendirmeler
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {pendingLoading && <SkeletonList rows={3} />}
           {pendingErr && (
-            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="alert">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               Hata: {pendingErr}
             </div>
           )}
           {!pendingLoading && !pendingErr && pendingList.length === 0 && (
-            <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">Bekleyen degerlendirme yok</div>
+            <div className="text-center py-8">
+              <svg className="w-10 h-10 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Bekleyen degerlendirme yok</p>
+            </div>
           )}
           {!pendingLoading && !pendingErr && pendingList.length > 0 && (
-            <ul className="divide-y divide-zinc-200 dark:divide-zinc-700">
+            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {pendingList.map((item) => (
                 <li
                   key={item.id}
-                  className="py-3 flex items-center justify-between"
+                  className="py-3.5 flex items-center justify-between hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 -mx-5 px-5 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <LiradsBadge category={item.original_category} />
@@ -366,10 +379,13 @@ export default function SecondReadingPage() {
 
       {/* Section 2: Review Form (when a reading selected) */}
       {selected && (
-        <Card className="border-blue-200 dark:border-blue-800">
-          <CardHeader className="bg-blue-50/50 dark:bg-blue-900/10">
+        <Card className="border-indigo-200/60 dark:border-indigo-800/40 animate-fade-in">
+          <CardHeader className="bg-indigo-50/30 dark:bg-indigo-900/10">
             <div className="flex items-center justify-between">
-              <CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
                 Degerlendirme: {selected.case_id}
               </CardTitle>
               <Button
@@ -384,7 +400,13 @@ export default function SecondReadingPage() {
           <CardContent className="space-y-6">
             {/* Case details */}
             {caseLoading && (
-              <div className="text-sm text-zinc-500 dark:text-zinc-400" role="status">Vaka yukleniyor...</div>
+              <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400" role="status">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Vaka yukleniyor...
+              </div>
             )}
             {caseErr && (
               <div className="text-sm text-red-600 dark:text-red-400" role="alert">Hata: {caseErr}</div>
@@ -399,10 +421,10 @@ export default function SecondReadingPage() {
 
                 {caseData.content?.agent_report && (
                   <div>
-                    <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    <div className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-2">
                       Orijinal Rapor
                     </div>
-                    <div className="bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <div className="bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl p-4 max-h-96 overflow-y-auto">
                       <MarkdownRenderer text={caseData.content.agent_report} />
                     </div>
                   </div>
@@ -411,7 +433,7 @@ export default function SecondReadingPage() {
             )}
 
             {/* Review form fields */}
-            <div className="space-y-4 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+            <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
               <FormField label="Degerlendirme" required>
                 <Select
                   value={agreement}
@@ -448,12 +470,18 @@ export default function SecondReadingPage() {
               </FormField>
 
               {submitErr && (
-                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+                <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="alert">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   Hata: {submitErr}
                 </div>
               )}
               {submitOk && (
-                <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2" role="status">
+                <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="status">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
                   Degerlendirme basariyla gonderildi!
                 </div>
               )}
@@ -461,7 +489,15 @@ export default function SecondReadingPage() {
                 onClick={handleSubmitReview}
                 disabled={submitting || !agreement}
               >
-                {submitting ? "Gonderiliyor..." : "Degerlendirmeyi Gonder"}
+                {submitting ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Gonderiliyor...
+                  </span>
+                ) : "Degerlendirmeyi Gonder"}
               </Button>
             </div>
           </CardContent>
@@ -471,7 +507,12 @@ export default function SecondReadingPage() {
       {/* Section 3: Assignment Form (admin) */}
       <Card>
         <CardHeader>
-          <CardTitle>Yeni Ikinci Okuma Atama</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            Yeni Ikinci Okuma Atama
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -509,17 +550,31 @@ export default function SecondReadingPage() {
           </div>
 
           {assignErr && (
-            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="alert">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               Hata: {assignErr}
             </div>
           )}
           {assignOk && (
-            <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2" role="status">
+            <div className="text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="status">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               Ikinci okuma basariyla atandi!
             </div>
           )}
           <Button onClick={handleAssign} disabled={assigning}>
-            {assigning ? "Ataniyor..." : "Atama Yap"}
+            {assigning ? (
+              <span className="flex items-center gap-2">
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Ataniyor...
+              </span>
+            ) : "Atama Yap"}
           </Button>
         </CardContent>
       </Card>
@@ -527,58 +582,71 @@ export default function SecondReadingPage() {
       {/* Section 4: Completed Reviews History */}
       <Card>
         <CardHeader>
-          <CardTitle>Tamamlanan Degerlendirmeler</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Tamamlanan Degerlendirmeler
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {completedLoading && <SkeletonList rows={3} />}
           {completedErr && (
-            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2" role="alert">
+            <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg px-3 py-2.5 flex items-center gap-2" role="alert">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
               Hata: {completedErr}
             </div>
           )}
           {!completedLoading && !completedErr && completedList.length === 0 && (
-            <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">Henuz tamamlanan degerlendirme yok</div>
+            <div className="text-center py-8">
+              <svg className="w-10 h-10 mx-auto text-zinc-300 dark:text-zinc-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">Henuz tamamlanan degerlendirme yok</p>
+            </div>
           )}
           {!completedLoading && !completedErr && completedList.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-5">
+              <table className="w-full text-sm min-w-[700px]">
                 <thead>
                   <tr className="border-b border-zinc-200 dark:border-zinc-700 text-left">
-                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Vaka ID</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Okuyucu</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Degerlendirme</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Orijinal</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Ikinci Kategori</th>
-                    <th className="py-2 pr-3 font-medium text-zinc-600 dark:text-zinc-400">Yorumlar</th>
-                    <th className="py-2 font-medium text-zinc-600 dark:text-zinc-400">Tamamlanma</th>
+                    <th className="py-3 px-5 font-semibold text-zinc-600 dark:text-zinc-400">Vaka ID</th>
+                    <th className="py-3 pr-3 font-semibold text-zinc-600 dark:text-zinc-400">Okuyucu</th>
+                    <th className="py-3 pr-3 font-semibold text-zinc-600 dark:text-zinc-400">Degerlendirme</th>
+                    <th className="py-3 pr-3 font-semibold text-zinc-600 dark:text-zinc-400">Orijinal</th>
+                    <th className="py-3 pr-3 font-semibold text-zinc-600 dark:text-zinc-400">Ikinci Kategori</th>
+                    <th className="py-3 pr-3 font-semibold text-zinc-600 dark:text-zinc-400">Yorumlar</th>
+                    <th className="py-3 pr-5 font-semibold text-zinc-600 dark:text-zinc-400">Tamamlanma</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
                   {completedList.map((item) => (
-                    <tr key={item.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                      <td className="py-2.5 pr-3 font-medium text-zinc-800 dark:text-zinc-200">
+                    <tr key={item.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-3 px-5 font-medium text-zinc-800 dark:text-zinc-200">
                         {item.case_id}
                       </td>
-                      <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400">
+                      <td className="py-3 pr-3 text-zinc-600 dark:text-zinc-400">
                         {item.reader_username}
                       </td>
-                      <td className="py-2.5 pr-3">
+                      <td className="py-3 pr-3">
                         <AgreementBadge agreement={item.agreement} />
                       </td>
-                      <td className="py-2.5 pr-3">
+                      <td className="py-3 pr-3">
                         <LiradsBadge category={item.original_category} />
                       </td>
-                      <td className="py-2.5 pr-3">
+                      <td className="py-3 pr-3">
                         {item.second_category ? (
                           <LiradsBadge category={item.second_category} />
                         ) : (
                           <span className="text-zinc-400 dark:text-zinc-500">-</span>
                         )}
                       </td>
-                      <td className="py-2.5 pr-3 text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
+                      <td className="py-3 pr-3 text-zinc-600 dark:text-zinc-400 max-w-xs truncate">
                         {item.comments || <span className="text-zinc-400 dark:text-zinc-500">-</span>}
                       </td>
-                      <td className="py-2.5 text-zinc-500 dark:text-zinc-400 text-xs">
+                      <td className="py-3 pr-5 text-zinc-500 dark:text-zinc-400 text-xs">
                         {item.completed_at?.slice(0, 10)}
                       </td>
                     </tr>
